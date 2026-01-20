@@ -530,7 +530,7 @@ export default function AdminDashboard() {
                               </>
                             )}
                             {isCurrentUser && (
-                              <span className="text-xs text-gray-400 italic">{t.common.you || 'You'}</span>
+                              <span className="text-xs text-gray-400 italic">You</span>
                             )}
                           </div>
                         </td>
