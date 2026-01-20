@@ -251,6 +251,10 @@ export interface UITranslations {
       roleUpdated: string
       statusUpdated: string
       updateError: string
+      deleteUser: string
+      deleteUserMessage: string
+      userDeleted: string
+      deleteError: string
     }
   adminProducts: {
     title: string
@@ -664,6 +668,10 @@ const translations: Record<Language, UITranslations> = {
       roleUpdated: 'User role updated successfully',
       statusUpdated: 'User status updated successfully',
       updateError: 'Failed to update user',
+      deleteUser: 'Delete User',
+      deleteUserMessage: 'Are you sure you want to permanently delete this user? This will delete all their orders, addresses, and cart items. This action cannot be undone.',
+      userDeleted: 'User and all related data deleted successfully',
+      deleteError: 'Failed to delete user',
     },
     adminProducts: {
       title: 'Manage Products',
@@ -1075,6 +1083,10 @@ const translations: Record<Language, UITranslations> = {
       roleUpdated: 'Brukerrolle oppdatert',
       statusUpdated: 'Brukerstatus oppdatert',
       updateError: 'Kunne ikke oppdatere bruker',
+      deleteUser: 'Slett bruker',
+      deleteUserMessage: 'Er du sikker på at du vil slette denne brukeren permanent? Dette vil slette alle deres bestillinger, adresser og handlekurvvarer. Denne handlingen kan ikke angres.',
+      userDeleted: 'Bruker og all relatert data slettet',
+      deleteError: 'Kunne ikke slette bruker',
     },
     adminProducts: {
       title: 'Administrer produkter',

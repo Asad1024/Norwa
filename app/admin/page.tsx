@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useGlobalLoader } from '@/components/GlobalLoader'
 import { useTranslations } from '@/hooks/useTranslations'
-import { Package, ShoppingCart, FolderOpen, Clock, Plus, Users, ClipboardList, ArrowRight, Shield, ShieldOff, CheckCircle, XCircle } from 'lucide-react'
+import { Package, ShoppingCart, FolderOpen, Clock, Plus, Users, ClipboardList, ArrowRight, Shield, ShieldOff, CheckCircle, XCircle, Trash2 } from 'lucide-react'
 
 export default function AdminDashboard() {
   const router = useRouter()
@@ -24,7 +24,7 @@ export default function AdminDashboard() {
   const [user, setUser] = useState<any>(null)
   const [confirmModal, setConfirmModal] = useState<{
     show: boolean
-    type: 'role' | 'activate' | 'deactivate' | null
+    type: 'role' | 'activate' | 'deactivate' | 'delete' | null
     userId: string | null
     userEmail: string | null
     newRole?: 'admin' | 'user'
@@ -211,6 +211,44 @@ export default function AdminDashboard() {
     setConfirmModal({
       show: true,
       type: isActive ? 'deactivate' : 'activate',
+      userId,
+      userEmail,
+    })
+  }
+
+  const handleDeleteUser = async () => {
+    if (!confirmModal.userId) return
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+
+      const response = await fetch(`/api/admin/users/${confirmModal.userId}/delete`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        showNotification(t.admin.userDeleted, 'success')
+        await fetchUsers()
+        setConfirmModal({ show: false, type: null, userId: null, userEmail: null })
+      } else {
+        showNotification(data.error || t.admin.deleteError, 'error')
+      }
+    } catch (error: any) {
+      console.error('Error deleting user:', error)
+      showNotification(t.admin.deleteError, 'error')
+    }
+  }
+
+  const openDeleteModal = (userId: string, userEmail: string) => {
+    setConfirmModal({
+      show: true,
+      type: 'delete',
       userId,
       userEmail,
     })
@@ -529,6 +567,13 @@ export default function AdminDashboard() {
                                     <CheckCircle className="w-4 h-4" />
                                   )}
                                 </button>
+                                <button
+                                  onClick={() => openDeleteModal(u.id, u.email)}
+                                  className="px-3 py-1.5 text-xs font-medium rounded transition-colors bg-red-100 hover:bg-red-200 text-red-700"
+                                  title={t.admin.deleteUser}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
                               </>
                             )}
                             {isCurrentUser && (
@@ -560,6 +605,7 @@ export default function AdminDashboard() {
                 {confirmModal.type === 'role' && t.admin.changeRoleMessage}
                 {confirmModal.type === 'activate' && t.admin.activateMessage}
                 {confirmModal.type === 'deactivate' && t.admin.deactivateMessage}
+                {confirmModal.type === 'delete' && t.admin.deleteUserMessage}
                 <br />
                 <strong className="text-gray-900">{confirmModal.userEmail}</strong>
               </p>
@@ -574,12 +620,14 @@ export default function AdminDashboard() {
                   onClick={() => {
                     if (confirmModal.type === 'role') {
                       handleRoleChange()
+                    } else if (confirmModal.type === 'delete') {
+                      handleDeleteUser()
                     } else {
                       handleStatusChange()
                     }
                   }}
                   className={`px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors ${
-                    confirmModal.type === 'deactivate'
+                    confirmModal.type === 'deactivate' || confirmModal.type === 'delete'
                       ? 'bg-red-600 hover:bg-red-700'
                       : 'bg-nature-green-600 hover:bg-nature-green-700'
                   }`}
