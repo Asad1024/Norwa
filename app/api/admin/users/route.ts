@@ -50,6 +50,7 @@ export async function GET(request: NextRequest) {
       id: u.id,
       email: u.email,
       role: u.user_metadata?.role || 'user',
+      is_active: u.user_metadata?.is_active !== false && !u.banned_until, // Active if not explicitly false and not banned
       created_at: u.created_at,
       last_sign_in_at: u.last_sign_in_at,
     }))

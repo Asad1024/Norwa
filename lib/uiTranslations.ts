@@ -233,6 +233,23 @@ export interface UITranslations {
       lastSignIn: string
       noUsersFound: string
       never: string
+      status: string
+      actions: string
+      makeAdmin: string
+      removeAdmin: string
+      activate: string
+      deactivate: string
+      active: string
+      inactive: string
+      changeRoleConfirm: string
+      changeRoleMessage: string
+      activateConfirm: string
+      activateMessage: string
+      deactivateConfirm: string
+      deactivateMessage: string
+      roleUpdated: string
+      statusUpdated: string
+      updateError: string
     }
   adminProducts: {
     title: string
@@ -628,6 +645,22 @@ const translations: Record<Language, UITranslations> = {
       lastSignIn: 'Last Sign In',
       noUsersFound: 'No users found',
       never: 'Never',
+      actions: 'Actions',
+      makeAdmin: 'Make Admin',
+      removeAdmin: 'Remove Admin',
+      activate: 'Activate',
+      deactivate: 'Deactivate',
+      active: 'Active',
+      inactive: 'Inactive',
+      changeRoleConfirm: 'Change User Role',
+      changeRoleMessage: 'Are you sure you want to change this user\'s role?',
+      activateConfirm: 'Activate User',
+      activateMessage: 'Are you sure you want to activate this user?',
+      deactivateConfirm: 'Deactivate User',
+      deactivateMessage: 'Are you sure you want to deactivate this user?',
+      roleUpdated: 'User role updated successfully',
+      statusUpdated: 'User status updated successfully',
+      updateError: 'Failed to update user',
     },
     adminProducts: {
       title: 'Manage Products',
@@ -1021,6 +1054,23 @@ const translations: Record<Language, UITranslations> = {
       lastSignIn: 'Siste innlogging',
       noUsersFound: 'Ingen brukere funnet',
       never: 'Aldri',
+      status: 'Status',
+      actions: 'Handlinger',
+      makeAdmin: 'Gjør til administrator',
+      removeAdmin: 'Fjern administrator',
+      activate: 'Aktiver',
+      deactivate: 'Deaktiver',
+      active: 'Aktiv',
+      inactive: 'Inaktiv',
+      changeRoleConfirm: 'Endre brukerrolle',
+      changeRoleMessage: 'Er du sikker på at du vil endre denne brukerens rolle?',
+      activateConfirm: 'Aktiver bruker',
+      activateMessage: 'Er du sikker på at du vil aktivere denne brukeren?',
+      deactivateConfirm: 'Deaktiver bruker',
+      deactivateMessage: 'Er du sikker på at du vil deaktivere denne brukeren?',
+      roleUpdated: 'Brukerrolle oppdatert',
+      statusUpdated: 'Brukerstatus oppdatert',
+      updateError: 'Kunne ikke oppdatere bruker',
     },
     adminProducts: {
       title: 'Administrer produkter',

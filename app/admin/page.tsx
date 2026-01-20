@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useGlobalLoader } from '@/components/GlobalLoader'
 import { useTranslations } from '@/hooks/useTranslations'
-import { Package, ShoppingCart, FolderOpen, Clock, Plus, Users, ClipboardList, ArrowRight } from 'lucide-react'
+import { Package, ShoppingCart, FolderOpen, Clock, Plus, Users, ClipboardList, ArrowRight, Shield, ShieldOff, CheckCircle, XCircle } from 'lucide-react'
 
 export default function AdminDashboard() {
   const router = useRouter()
@@ -22,6 +22,27 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
+  const [confirmModal, setConfirmModal] = useState<{
+    show: boolean
+    type: 'role' | 'activate' | 'deactivate' | null
+    userId: string | null
+    userEmail: string | null
+    newRole?: 'admin' | 'user'
+  }>({
+    show: false,
+    type: null,
+    userId: null,
+    userEmail: null,
+  })
+  const [notification, setNotification] = useState<{
+    show: boolean
+    message: string
+    type: 'success' | 'error'
+  }>({
+    show: false,
+    message: '',
+    type: 'success',
+  })
   const t = useTranslations()
 
   useEffect(() => {
@@ -83,7 +104,7 @@ export default function AdminDashboard() {
     fetchData()
   }, [supabase, router, showLoader, hideLoader])
 
-  const fetchUsers = async (currentUser: any) => {
+  const fetchUsers = async (currentUser?: any) => {
     try {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) return
@@ -101,6 +122,96 @@ export default function AdminDashboard() {
     } catch (error) {
       console.error('Error fetching users:', error)
     }
+  }
+
+  const showNotification = (message: string, type: 'success' | 'error') => {
+    setNotification({ show: true, message, type })
+    setTimeout(() => {
+      setNotification({ show: false, message: '', type: 'success' })
+    }, 3000)
+  }
+
+  const handleRoleChange = async () => {
+    if (!confirmModal.userId || !confirmModal.newRole) return
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+
+      const response = await fetch(`/api/admin/users/${confirmModal.userId}/role`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ role: confirmModal.newRole }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        showNotification(t.admin.roleUpdated, 'success')
+        await fetchUsers()
+        setConfirmModal({ show: false, type: null, userId: null, userEmail: null })
+      } else {
+        showNotification(data.error || t.admin.updateError, 'error')
+      }
+    } catch (error: any) {
+      console.error('Error updating role:', error)
+      showNotification(t.admin.updateError, 'error')
+    }
+  }
+
+  const handleStatusChange = async () => {
+    if (!confirmModal.userId) return
+
+    const isActivating = confirmModal.type === 'activate'
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+
+      const response = await fetch(`/api/admin/users/${confirmModal.userId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ isActive: isActivating }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        showNotification(t.admin.statusUpdated, 'success')
+        await fetchUsers()
+        setConfirmModal({ show: false, type: null, userId: null, userEmail: null })
+      } else {
+        showNotification(data.error || t.admin.updateError, 'error')
+      }
+    } catch (error: any) {
+      console.error('Error updating status:', error)
+      showNotification(t.admin.updateError, 'error')
+    }
+  }
+
+  const openRoleModal = (userId: string, userEmail: string, currentRole: string) => {
+    setConfirmModal({
+      show: true,
+      type: 'role',
+      userId,
+      userEmail,
+      newRole: currentRole === 'admin' ? 'user' : 'admin',
+    })
+  }
+
+  const openStatusModal = (userId: string, userEmail: string, isActive: boolean) => {
+    setConfirmModal({
+      show: true,
+      type: isActive ? 'deactivate' : 'activate',
+      userId,
+      userEmail,
+    })
   }
 
   const statsCards = [
@@ -336,38 +447,96 @@ export default function AdminDashboard() {
                   <tr className="border-b border-gray-200">
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">{t.profile.email}</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">{t.profile.role}</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">{t.admin.status}</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">{t.admin.created}</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">{t.admin.lastSignIn}</th>
+                    <th className="text-right py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">{t.admin.actions}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {users.map((u) => (
-                    <tr
-                      key={u.id}
-                      className="hover:bg-gray-50 transition-colors"
-                    >
-                      <td className="py-3 px-4 font-medium text-gray-900 text-sm">{u.email}</td>
-                      <td className="py-3 px-4">
-                        <span
-                          className={`inline-block px-2.5 py-1 rounded text-xs font-medium ${
-                            u.role === 'admin'
-                              ? 'bg-purple-100 text-purple-800'
-                              : 'bg-gray-100 text-gray-800'
-                          }`}
-                        >
-                          {u.role === 'admin' ? t.profile.admin : t.profile.user}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-gray-600 text-sm">
-                        {new Date(u.created_at).toLocaleDateString()}
-                      </td>
-                      <td className="py-3 px-4 text-gray-600 text-sm">
-                        {u.last_sign_in_at
-                          ? new Date(u.last_sign_in_at).toLocaleDateString()
-                          : t.admin.never}
-                      </td>
-                    </tr>
-                  ))}
+                  {users.map((u) => {
+                    const isCurrentUser = user?.id === u.id
+                    const isActive = u.is_active !== false
+                    return (
+                      <tr
+                        key={u.id}
+                        className="hover:bg-gray-50 transition-colors"
+                      >
+                        <td className="py-3 px-4 font-medium text-gray-900 text-sm">{u.email}</td>
+                        <td className="py-3 px-4">
+                          <span
+                            className={`inline-block px-2.5 py-1 rounded text-xs font-medium ${
+                              u.role === 'admin'
+                                ? 'bg-purple-100 text-purple-800'
+                                : 'bg-gray-100 text-gray-800'
+                            }`}
+                          >
+                            {u.role === 'admin' ? t.profile.admin : t.profile.user}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span
+                            className={`inline-block px-2.5 py-1 rounded text-xs font-medium ${
+                              isActive
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-red-100 text-red-800'
+                            }`}
+                          >
+                            {isActive ? t.admin.active : t.admin.inactive}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-gray-600 text-sm">
+                          {new Date(u.created_at).toLocaleDateString()}
+                        </td>
+                        <td className="py-3 px-4 text-gray-600 text-sm">
+                          {u.last_sign_in_at
+                            ? new Date(u.last_sign_in_at).toLocaleDateString()
+                            : t.admin.never}
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            {!isCurrentUser && (
+                              <>
+                                <button
+                                  onClick={() => openRoleModal(u.id, u.email, u.role)}
+                                  className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+                                    u.role === 'admin'
+                                      ? 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                                      : 'bg-purple-100 hover:bg-purple-200 text-purple-700'
+                                  }`}
+                                  title={u.role === 'admin' ? t.admin.removeAdmin : t.admin.makeAdmin}
+                                >
+                                  {u.role === 'admin' ? (
+                                    <ShieldOff className="w-4 h-4" />
+                                  ) : (
+                                    <Shield className="w-4 h-4" />
+                                  )}
+                                </button>
+                                <button
+                                  onClick={() => openStatusModal(u.id, u.email, isActive)}
+                                  className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+                                    isActive
+                                      ? 'bg-red-100 hover:bg-red-200 text-red-700'
+                                      : 'bg-green-100 hover:bg-green-200 text-green-700'
+                                  }`}
+                                  title={isActive ? t.admin.deactivate : t.admin.activate}
+                                >
+                                  {isActive ? (
+                                    <XCircle className="w-4 h-4" />
+                                  ) : (
+                                    <CheckCircle className="w-4 h-4" />
+                                  )}
+                                </button>
+                              </>
+                            )}
+                            {isCurrentUser && (
+                              <span className="text-xs text-gray-400 italic">{t.common.you || 'You'}</span>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
@@ -377,6 +546,64 @@ export default function AdminDashboard() {
             </div>
           )}
         </div>
+
+        {/* Confirmation Modal */}
+        {confirmModal.show && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                {confirmModal.type === 'role' && t.admin.changeRoleConfirm}
+                {confirmModal.type === 'activate' && t.admin.activateConfirm}
+                {confirmModal.type === 'deactivate' && t.admin.deactivateConfirm}
+              </h3>
+              <p className="text-sm text-gray-600 mb-4">
+                {confirmModal.type === 'role' && t.admin.changeRoleMessage}
+                {confirmModal.type === 'activate' && t.admin.activateMessage}
+                {confirmModal.type === 'deactivate' && t.admin.deactivateMessage}
+                <br />
+                <strong className="text-gray-900">{confirmModal.userEmail}</strong>
+              </p>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setConfirmModal({ show: false, type: null, userId: null, userEmail: null })}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                >
+                  {t.common.cancel}
+                </button>
+                <button
+                  onClick={() => {
+                    if (confirmModal.type === 'role') {
+                      handleRoleChange()
+                    } else {
+                      handleStatusChange()
+                    }
+                  }}
+                  className={`px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors ${
+                    confirmModal.type === 'deactivate'
+                      ? 'bg-red-600 hover:bg-red-700'
+                      : 'bg-nature-green-600 hover:bg-nature-green-700'
+                  }`}
+                >
+                  {t.common.confirm}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Notification */}
+        {notification.show && (
+          <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 ${
+            notification.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+          }`}>
+            {notification.type === 'success' ? (
+              <CheckCircle className="w-5 h-5" />
+            ) : (
+              <XCircle className="w-5 h-5" />
+            )}
+            <span className="text-sm font-medium">{notification.message}</span>
+          </div>
+        )}
       </div>
     </div>
   )
