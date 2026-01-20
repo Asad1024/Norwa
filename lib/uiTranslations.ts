@@ -645,6 +645,7 @@ const translations: Record<Language, UITranslations> = {
       lastSignIn: 'Last Sign In',
       noUsersFound: 'No users found',
       never: 'Never',
+      status: 'Status',
       actions: 'Actions',
       makeAdmin: 'Make Admin',
       removeAdmin: 'Remove Admin',
