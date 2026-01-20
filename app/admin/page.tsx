@@ -35,6 +35,7 @@ export default function AdminDashboard() {
     userEmail: null,
   })
   const [confirmEnabled, setConfirmEnabled] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const [notification, setNotification] = useState<{
     show: boolean
     message: string
@@ -136,9 +137,13 @@ export default function AdminDashboard() {
   const handleRoleChange = async () => {
     if (!confirmModal.userId || !confirmModal.newRole) return
 
+    setIsSaving(true)
     try {
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session) return
+      if (!session) {
+        setIsSaving(false)
+        return
+      }
 
       const response = await fetch(`/api/admin/users/${confirmModal.userId}/role`, {
         method: 'PUT',
@@ -155,12 +160,15 @@ export default function AdminDashboard() {
         showNotification(t.admin.roleUpdated, 'success')
         await fetchUsers()
         setConfirmModal({ show: false, type: null, userId: null, userEmail: null })
+        setConfirmEnabled(false)
       } else {
         showNotification(data.error || t.admin.updateError, 'error')
       }
     } catch (error: any) {
       console.error('Error updating role:', error)
       showNotification(t.admin.updateError, 'error')
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -168,10 +176,14 @@ export default function AdminDashboard() {
     if (!confirmModal.userId) return
 
     const isActivating = confirmModal.type === 'activate'
+    setIsSaving(true)
 
     try {
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session) return
+      if (!session) {
+        setIsSaving(false)
+        return
+      }
 
       const response = await fetch(`/api/admin/users/${confirmModal.userId}/status`, {
         method: 'PUT',
@@ -188,12 +200,15 @@ export default function AdminDashboard() {
         showNotification(t.admin.statusUpdated, 'success')
         await fetchUsers()
         setConfirmModal({ show: false, type: null, userId: null, userEmail: null })
+        setConfirmEnabled(false)
       } else {
         showNotification(data.error || t.admin.updateError, 'error')
       }
     } catch (error: any) {
       console.error('Error updating status:', error)
       showNotification(t.admin.updateError, 'error')
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -206,6 +221,7 @@ export default function AdminDashboard() {
       newRole: currentRole === 'admin' ? 'user' : 'admin',
     })
     setConfirmEnabled(false) // Disable button initially for role changes
+    setIsSaving(false) // Reset saving state
   }
 
   const openStatusModal = (userId: string, userEmail: string, isActive: boolean) => {
@@ -216,14 +232,19 @@ export default function AdminDashboard() {
       userEmail,
     })
     setConfirmEnabled(true) // Enable button for status changes
+    setIsSaving(false) // Reset saving state
   }
 
   const handleDeleteUser = async () => {
     if (!confirmModal.userId) return
 
+    setIsSaving(true)
     try {
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session) return
+      if (!session) {
+        setIsSaving(false)
+        return
+      }
 
       const response = await fetch(`/api/admin/users/${confirmModal.userId}/delete`, {
         method: 'DELETE',
@@ -238,12 +259,15 @@ export default function AdminDashboard() {
         showNotification(t.admin.userDeleted, 'success')
         await fetchUsers()
         setConfirmModal({ show: false, type: null, userId: null, userEmail: null })
+        setConfirmEnabled(false)
       } else {
         showNotification(data.error || t.admin.deleteError, 'error')
       }
     } catch (error: any) {
       console.error('Error deleting user:', error)
       showNotification(t.admin.deleteError, 'error')
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -255,6 +279,7 @@ export default function AdminDashboard() {
       userEmail,
     })
     setConfirmEnabled(true) // Enable button for delete
+    setIsSaving(false) // Reset saving state
   }
 
   const statsCards = [
@@ -601,9 +626,6 @@ export default function AdminDashboard() {
         {confirmModal.show && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Confirm...
-              </h3>
               <p className="text-sm text-gray-600 mb-4">
                 {confirmModal.type === 'role' && t.admin.changeRoleMessage}
                 {confirmModal.type === 'activate' && t.admin.activateMessage}
@@ -619,6 +641,7 @@ export default function AdminDashboard() {
                       type="checkbox"
                       checked={confirmEnabled}
                       onChange={(e) => setConfirmEnabled(e.target.checked)}
+                      disabled={isSaving}
                       className="w-4 h-4 text-nature-green-600 border-gray-300 rounded focus:ring-nature-green-500"
                     />
                     <span>I understand this action will change the user's role</span>
@@ -628,10 +651,14 @@ export default function AdminDashboard() {
               <div className="flex gap-3 justify-end">
                 <button
                   onClick={() => {
-                    setConfirmModal({ show: false, type: null, userId: null, userEmail: null })
-                    setConfirmEnabled(false)
+                    if (!isSaving) {
+                      setConfirmModal({ show: false, type: null, userId: null, userEmail: null })
+                      setConfirmEnabled(false)
+                      setIsSaving(false)
+                    }
                   }}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                  disabled={isSaving}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {t.common.cancel}
                 </button>
@@ -644,20 +671,19 @@ export default function AdminDashboard() {
                     } else {
                       handleStatusChange()
                     }
-                    setConfirmEnabled(false)
                   }}
-                  disabled={confirmModal.type === 'role' && !confirmEnabled}
+                  disabled={(confirmModal.type === 'role' && !confirmEnabled) || isSaving}
                   className={`px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors ${
                     confirmModal.type === 'deactivate' || confirmModal.type === 'delete'
                       ? 'bg-red-600 hover:bg-red-700'
                       : 'bg-nature-green-600 hover:bg-nature-green-700'
                   } ${
-                    confirmModal.type === 'role' && !confirmEnabled
+                    (confirmModal.type === 'role' && !confirmEnabled) || isSaving
                       ? 'opacity-50 cursor-not-allowed'
                       : ''
                   }`}
                 >
-                  {t.common.confirm}
+                  {isSaving ? 'Saving...' : t.common.confirm}
                 </button>
               </div>
             </div>
