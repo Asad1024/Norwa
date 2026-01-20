@@ -117,7 +117,9 @@ export default function AdminDashboard() {
 
       if (response.ok) {
         const data = await response.json()
-        setUsers(data.users || [])
+        // Filter out deactivated users
+        const activeUsers = (data.users || []).filter((u: any) => u.is_active !== false)
+        setUsers(activeUsers)
       }
     } catch (error) {
       console.error('Error fetching users:', error)
@@ -552,9 +554,7 @@ export default function AdminDashboard() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                {confirmModal.type === 'role' && t.admin.changeRoleConfirm}
-                {confirmModal.type === 'activate' && t.admin.activateConfirm}
-                {confirmModal.type === 'deactivate' && t.admin.deactivateConfirm}
+                Confirm...
               </h3>
               <p className="text-sm text-gray-600 mb-4">
                 {confirmModal.type === 'role' && t.admin.changeRoleMessage}

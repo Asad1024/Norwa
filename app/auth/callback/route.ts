@@ -20,6 +20,12 @@ export async function GET(request: Request) {
       const user = data.user
       const metadata = user.user_metadata || {}
       
+      // Check if user is banned/deactivated
+      if (user.banned_until || metadata.is_active === false) {
+        await supabase.auth.signOut()
+        return NextResponse.redirect(`${origin}/login?error=account_deactivated`)
+      }
+      
       // Check if user is from Google OAuth and doesn't have name or phone
       const isGoogleUser = user.app_metadata?.provider === 'google'
       const hasName = metadata.full_name || metadata.name || metadata.display_name

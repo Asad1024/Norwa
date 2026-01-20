@@ -168,6 +168,7 @@ export interface UITranslations {
     resetPasswordSent: string
     resetPasswordError: string
     backToLogin: string
+    accountDeactivated: string
   }
   register: {
     title: string
@@ -580,6 +581,7 @@ const translations: Record<Language, UITranslations> = {
       resetPasswordSent: 'Password reset email sent! Check your inbox.',
       resetPasswordError: 'Failed to send reset email',
       backToLogin: 'Back to Login',
+      accountDeactivated: 'Your account is currently deactivated. Please contact an administrator for assistance.',
     },
     register: {
       title: 'Register',
@@ -990,6 +992,7 @@ const translations: Record<Language, UITranslations> = {
       resetPasswordSent: 'E-post for tilbakestilling av passord sendt! Sjekk innboksen din.',
       resetPasswordError: 'Kunne ikke sende tilbakestillings-e-post',
       backToLogin: 'Tilbake til innlogging',
+      accountDeactivated: 'Din konto er for øyeblikket deaktivert. Vennligst kontakt en administrator for hjelp.',
     },
     register: {
       title: 'Registrer',

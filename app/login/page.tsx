@@ -24,8 +24,10 @@ function LoginContent() {
     const authError = searchParams.get('error')
     if (authError === 'auth_failed') {
       setError('Authentication failed. Please try again.')
+    } else if (authError === 'account_deactivated') {
+      setError(t.login.accountDeactivated)
     }
-  }, [searchParams])
+  }, [searchParams, t])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -38,7 +40,22 @@ function LoginContent() {
         password,
       })
 
-      if (error) throw error
+      if (error) {
+        // Check if user is banned/deactivated
+        if (error.message?.includes('banned') || error.message?.includes('disabled')) {
+          throw new Error(t.login.accountDeactivated)
+        }
+        throw error
+      }
+
+      // Check if user is banned/deactivated after successful login
+      if (data?.user) {
+        const { data: userData, error: userError } = await supabase.auth.getUser()
+        if (userData?.user?.banned_until || userData?.user?.user_metadata?.is_active === false) {
+          await supabase.auth.signOut()
+          throw new Error(t.login.accountDeactivated)
+        }
+      }
 
       router.push('/')
       router.refresh()
