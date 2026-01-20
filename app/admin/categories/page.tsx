@@ -195,7 +195,7 @@ export default function CategoriesPage() {
                       <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">{t.adminProducts.name}</th>
                       <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">{t.common.description}</th>
                       <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">{t.adminCategories.status}</th>
-                      <th className="text-right py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">{t.common.actions}</th>
+                      <th className="text-right py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">{t.adminCategories.actions}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
