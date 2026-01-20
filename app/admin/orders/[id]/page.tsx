@@ -18,6 +18,7 @@ export default function OrderDetailPage() {
   const [order, setOrder] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
+  const [orderUser, setOrderUser] = useState<any>(null)
   const [updatingStatus, setUpdatingStatus] = useState(false)
   const [modal, setModal] = useState<{
     isOpen: boolean
@@ -73,6 +74,33 @@ export default function OrderDetailPage() {
 
         if (error) throw error
         setOrder(orderData)
+
+        // Fetch user details for this order
+        if (orderData?.user_id) {
+          try {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (session) {
+              const userResponse = await fetch(`/api/admin/users/${orderData.user_id}`, {
+                headers: {
+                  'Authorization': `Bearer ${session.access_token}`,
+                },
+              })
+              
+              if (userResponse.ok) {
+                const userData = await userResponse.json()
+                if (userData.user) {
+                  setOrderUser({
+                    email: userData.user.email,
+                    name: userData.user.name,
+                  })
+                }
+              }
+            }
+          } catch (userErr) {
+            console.error('Error fetching user details:', userErr)
+            // Continue without user details
+          }
+        }
       } catch (error: any) {
         console.error('Error fetching order:', error)
         setModal({
@@ -191,6 +219,21 @@ export default function OrderDetailPage() {
                 </p>
               </div>
             </div>
+
+            {/* User Information */}
+            {orderUser && (
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <h3 className="text-lg font-bold text-nature-green-800 mb-3">{t.profile.user || 'User Information'}</h3>
+                <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                  <p className="text-gray-800 font-medium mb-2">
+                    <span className="font-semibold">{t.common.name}:</span> {orderUser.name}
+                  </p>
+                  <p className="text-gray-700">
+                    <span className="font-semibold">{t.common.email}:</span> {orderUser.email}
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Shipping Information */}
             {order.shipping_address && (
