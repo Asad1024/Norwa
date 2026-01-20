@@ -256,6 +256,7 @@ export interface UITranslations {
     icon: string
     active: string
     inactive: string
+    status: string
     sortOrder: string
     actions: string
     edit: string
@@ -650,6 +651,7 @@ const translations: Record<Language, UITranslations> = {
       icon: 'Icon',
       active: 'Active',
       inactive: 'Inactive',
+      status: 'Status',
       sortOrder: 'Sort Order',
       actions: 'Actions',
       edit: 'Edit',
@@ -1042,6 +1044,7 @@ const translations: Record<Language, UITranslations> = {
       icon: 'Ikon',
       active: 'Aktiv',
       inactive: 'Inaktiv',
+      status: 'Status',
       sortOrder: 'Sorteringsrekkefølge',
       actions: 'Handlinger',
       edit: 'Rediger',
