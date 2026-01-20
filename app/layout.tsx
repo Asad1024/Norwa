@@ -9,8 +9,11 @@ import Footer from "@/components/Footer";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Norwa - Nature-Friendly E-Commerce",
+  title: "Norway | Greennex",
   description: "Sustainable products for a greener future",
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
 
 export default function RootLayout({
