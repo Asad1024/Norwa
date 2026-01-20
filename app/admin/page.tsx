@@ -34,6 +34,7 @@ export default function AdminDashboard() {
     userId: null,
     userEmail: null,
   })
+  const [confirmEnabled, setConfirmEnabled] = useState(false)
   const [notification, setNotification] = useState<{
     show: boolean
     message: string
@@ -117,9 +118,8 @@ export default function AdminDashboard() {
 
       if (response.ok) {
         const data = await response.json()
-        // Filter out deactivated users
-        const activeUsers = (data.users || []).filter((u: any) => u.is_active !== false)
-        setUsers(activeUsers)
+        // Show all users (including deactivated)
+        setUsers(data.users || [])
       }
     } catch (error) {
       console.error('Error fetching users:', error)
@@ -205,6 +205,7 @@ export default function AdminDashboard() {
       userEmail,
       newRole: currentRole === 'admin' ? 'user' : 'admin',
     })
+    setConfirmEnabled(false) // Disable button initially for role changes
   }
 
   const openStatusModal = (userId: string, userEmail: string, isActive: boolean) => {
@@ -214,6 +215,7 @@ export default function AdminDashboard() {
       userId,
       userEmail,
     })
+    setConfirmEnabled(true) // Enable button for status changes
   }
 
   const handleDeleteUser = async () => {
@@ -252,6 +254,7 @@ export default function AdminDashboard() {
       userId,
       userEmail,
     })
+    setConfirmEnabled(true) // Enable button for delete
   }
 
   const statsCards = [
@@ -609,9 +612,25 @@ export default function AdminDashboard() {
                 <br />
                 <strong className="text-gray-900">{confirmModal.userEmail}</strong>
               </p>
+              {confirmModal.type === 'role' && (
+                <div className="mb-4">
+                  <label className="flex items-center gap-2 text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={confirmEnabled}
+                      onChange={(e) => setConfirmEnabled(e.target.checked)}
+                      className="w-4 h-4 text-nature-green-600 border-gray-300 rounded focus:ring-nature-green-500"
+                    />
+                    <span>I understand this action will change the user's role</span>
+                  </label>
+                </div>
+              )}
               <div className="flex gap-3 justify-end">
                 <button
-                  onClick={() => setConfirmModal({ show: false, type: null, userId: null, userEmail: null })}
+                  onClick={() => {
+                    setConfirmModal({ show: false, type: null, userId: null, userEmail: null })
+                    setConfirmEnabled(false)
+                  }}
                   className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
                 >
                   {t.common.cancel}
@@ -625,11 +644,17 @@ export default function AdminDashboard() {
                     } else {
                       handleStatusChange()
                     }
+                    setConfirmEnabled(false)
                   }}
+                  disabled={confirmModal.type === 'role' && !confirmEnabled}
                   className={`px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors ${
                     confirmModal.type === 'deactivate' || confirmModal.type === 'delete'
                       ? 'bg-red-600 hover:bg-red-700'
                       : 'bg-nature-green-600 hover:bg-nature-green-700'
+                  } ${
+                    confirmModal.type === 'role' && !confirmEnabled
+                      ? 'opacity-50 cursor-not-allowed'
+                      : ''
                   }`}
                 >
                   {t.common.confirm}
