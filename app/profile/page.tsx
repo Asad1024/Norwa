@@ -256,12 +256,11 @@ export default function ProfilePage() {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                {isAdmin && (
-                  <span className="px-4 py-2 bg-nature-green-600 text-white rounded-lg text-sm font-medium shadow-sm">
-                    {t.profile.admin}
-                  </span>
-                )}
-                <span className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium">
+                <span className={`px-4 py-2 rounded-lg text-sm font-medium shadow-sm ${
+                  isAdmin 
+                    ? 'bg-nature-green-600 text-white' 
+                    : 'bg-gray-100 text-gray-700'
+                }`}>
                   {isAdmin ? t.profile.admin : t.profile.user}
                 </span>
               </div>
