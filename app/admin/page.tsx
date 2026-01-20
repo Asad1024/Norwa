@@ -504,10 +504,20 @@ export default function AdminDashboard() {
 
         {/* All Users Section */}
         <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Users className="w-5 h-5 text-gray-600" />
-            {t.admin.allUsers} <span className="text-gray-500 font-normal">({users.length})</span>
-          </h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <Users className="w-5 h-5 text-gray-600" />
+              {t.admin.allUsers} <span className="text-gray-500 font-normal">({users.length})</span>
+            </h2>
+            <Link
+              href="/admin/users"
+              onClick={() => showLoader(t.loader.loading)}
+              className="text-gray-600 hover:text-gray-900 font-medium text-sm flex items-center gap-1"
+            >
+              {t.common.view} {t.common.all}
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
           {users.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full">
