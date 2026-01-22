@@ -108,30 +108,34 @@ export interface UITranslations {
     noProductsFound: string
     tryAdjusting: string
     viewDetails: string
+    stock: string
+    outOfStock: string
   }
   productDetail: {
     description: string
     addToCart: string
     adding: string
     addedToCart: string
+    outOfStock: string
   }
-  cart: {
-    title: string
-    emptyTitle: string
-    emptyMessage: string
-    startShopping: string
-    whyShop: string
-    ecoFriendly: string
-    ecoFriendlyDesc: string
-    fastDelivery: string
-    fastDeliveryDesc: string
-    qualityProducts: string
-    qualityProductsDesc: string
-    cartItems: string
-    remove: string
-    removedFromCart: string
-    orderSummary: string
-    items: string
+    cart: {
+      title: string
+      emptyTitle: string
+      emptyMessage: string
+      startShopping: string
+      whyShop: string
+      ecoFriendly: string
+      ecoFriendlyDesc: string
+      fastDelivery: string
+      fastDeliveryDesc: string
+      qualityProducts: string
+      qualityProductsDesc: string
+      cartItems: string
+      remove: string
+      removedFromCart: string
+      orderSummary: string
+      items: string
+      maxStockReached: string
     proceedToCheckout: string
     continueShopping: string
   }
@@ -261,6 +265,9 @@ export interface UITranslations {
     addNew: string
     noProducts: string
     image: string
+    assignUsers: string
+    assignUsersDescription: string
+    assignmentsUpdated: string
     name: string
     description: string
     price: string
@@ -306,6 +313,8 @@ export interface UITranslations {
     categoryName: string
     categoryDescription: string
     price: string
+    stock: string
+    stockDescription: string
     image: string
     uploadImage: string
     imageUrl: string
@@ -525,12 +534,15 @@ const translations: Record<Language, UITranslations> = {
       noProductsFound: 'No products found',
       tryAdjusting: 'Try adjusting your search or filter criteria',
       viewDetails: 'View Details',
+      stock: 'Stock',
+      outOfStock: 'Out of Stock',
     },
     productDetail: {
       description: 'Description',
       addToCart: 'Add to Cart',
       adding: 'Adding...',
       addedToCart: 'added to cart!',
+      outOfStock: 'Out of Stock',
     },
     cart: {
       title: 'Shopping Cart',
@@ -549,6 +561,7 @@ const translations: Record<Language, UITranslations> = {
       removedFromCart: 'removed from cart',
       orderSummary: 'Order Summary',
       items: 'Items',
+      maxStockReached: 'Maximum stock available reached',
       proceedToCheckout: 'Proceed to Checkout',
       continueShopping: 'Continue Shopping',
     },
@@ -685,6 +698,9 @@ const translations: Record<Language, UITranslations> = {
       actions: 'Actions',
       edit: 'Edit',
       delete: 'Delete',
+      assignUsers: 'Assign Users',
+      assignUsersDescription: 'Select which users can see this product. If no users are selected, the product will be visible to all users.',
+      assignmentsUpdated: 'Product assignments updated successfully',
     },
     adminCategories: {
       title: 'Manage Categories',
@@ -723,6 +739,8 @@ const translations: Record<Language, UITranslations> = {
       categoryName: 'Category Name',
       categoryDescription: 'Description',
       price: 'Price ($)',
+      stock: 'Stock',
+      stockDescription: 'Number of items available in stock',
       image: 'Product Image',
       uploadImage: 'Upload an image (max 5MB) or use URL below',
       imageUrl: 'Enter image URL or leave empty for default icon',
@@ -940,12 +958,15 @@ const translations: Record<Language, UITranslations> = {
       noProductsFound: 'Ingen produkter funnet',
       tryAdjusting: 'Prøv å justere søket eller filterkriteriene',
       viewDetails: 'Vis detaljer',
+      stock: 'Lager',
+      outOfStock: 'Utsolgt',
     },
     productDetail: {
       description: 'Beskrivelse',
       addToCart: 'Legg i handlekurv',
       adding: 'Legger til...',
       addedToCart: 'lagt i handlekurv!',
+      outOfStock: 'Utsolgt',
     },
     cart: {
       title: 'Handlekurv',
@@ -1100,6 +1121,9 @@ const translations: Record<Language, UITranslations> = {
       actions: 'Handlinger',
       edit: 'Rediger',
       delete: 'Slett',
+      assignUsers: 'Tildel brukere',
+      assignUsersDescription: 'Velg hvilke brukere som kan se dette produktet. Hvis ingen brukere er valgt, vil produktet være synlig for alle brukere.',
+      assignmentsUpdated: 'Produkttildelinger oppdatert',
     },
     adminCategories: {
       title: 'Administrer kategorier',
@@ -1138,6 +1162,8 @@ const translations: Record<Language, UITranslations> = {
       categoryName: 'Kategorinavn',
       categoryDescription: 'Beskrivelse',
       price: 'Pris ($)',
+      stock: 'Lager',
+      stockDescription: 'Antall varer tilgjengelig på lager',
       image: 'Produktbilde',
       uploadImage: 'Last opp et bilde (maks 5MB) eller bruk URL nedenfor',
       imageUrl: 'Skriv inn bilde-URL eller la stå tomt for standardikon',

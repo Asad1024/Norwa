@@ -25,6 +25,7 @@ export interface Product {
   category: string | null // Legacy field, kept for backward compatibility
   category_id: string | null // New field for category relationship
   price: number
+  stock: number
   image_url: string | null
   created_at: string
   updated_at: string
@@ -32,6 +33,13 @@ export interface Product {
   // Translation fields (optional for backward compatibility)
   name_translations?: Translations | null
   description_translations?: Translations | null
+}
+
+export interface ProductUserAssignment {
+  id: string
+  product_id: string
+  user_id: string
+  created_at: string
 }
 
 export interface CartItem {

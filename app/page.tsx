@@ -19,16 +19,52 @@ export default function Home() {
 
   useEffect(() => {
     const fetchProducts = async () => {
-      const { data } = await supabase
+      // Get current user
+      const { data: { user: currentUser } } = await supabase.auth.getUser()
+
+      const { data: productsData } = await supabase
         .from('products')
         .select(`
           *,
           category_data:categories(*)
         `)
         .order('created_at', { ascending: false })
-        .limit(6)
       
-      setProducts(data || [])
+      // Filter products based on user assignments
+      let filteredProducts = productsData || []
+      if (currentUser) {
+        // Fetch product assignments for this user
+        const { data: assignments } = await supabase
+          .from('product_user_assignments')
+          .select('product_id')
+          .eq('user_id', currentUser.id)
+
+        const assignedProductIds = new Set((assignments || []).map((a: any) => a.product_id))
+
+        // Get all product IDs that have assignments
+        const { data: allAssignedProducts } = await supabase
+          .from('product_user_assignments')
+          .select('product_id')
+          .distinct()
+
+        const allAssignedProductIds = new Set((allAssignedProducts || []).map((a: any) => a.product_id))
+
+        // Filter: show products that are either:
+        // 1. Assigned to this user, OR
+        // 2. Not assigned to anyone (visible to all)
+        if (allAssignedProductIds.size > 0) {
+          filteredProducts = (productsData || []).filter((p: any) => {
+            // If product has assignments, only show if assigned to this user
+            if (allAssignedProductIds.has(p.id)) {
+              return assignedProductIds.has(p.id)
+            }
+            // If product has no assignments, show to everyone
+            return true
+          })
+        }
+      }
+      
+      setProducts(filteredProducts.slice(0, 6))
       setLoading(false)
     }
 
@@ -127,9 +163,18 @@ export default function Home() {
                   <h3 className="font-semibold text-base text-gray-900 mb-2 line-clamp-2">
                     {getTranslation(product.name_translations, language)}
                   </h3>
-                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                  <p className="text-gray-600 text-sm mb-3 line-clamp-2">
                     {getTranslation(product.description_translations, language)}
                   </p>
+                  <div className="mb-3">
+                    <span className={`inline-block px-2.5 py-1 rounded text-xs font-medium ${
+                      (product.stock || 0) > 0
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-red-100 text-red-800'
+                    }`}>
+                      {t.products.stock || 'Stock'}: {(product.stock || 0) > 0 ? product.stock : t.products.outOfStock || 'Out of Stock'}
+                    </span>
+                  </div>
                   <div className="flex items-center justify-between">
                     <p className="text-lg font-semibold text-gray-900">
                       ${product.price.toFixed(2)}

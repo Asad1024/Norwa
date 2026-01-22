@@ -35,6 +35,7 @@ export default function EditProductPage() {
     description_no: '',
     category_id: '',
     price: '',
+    stock: '0',
     image_url: '',
   })
 
@@ -73,6 +74,7 @@ export default function EditProductPage() {
             description_no: descTranslations.no || productData.description || '',
             category_id: productData.category_id || '',
             price: productData.price.toString(),
+            stock: (productData.stock || 0).toString(),
             image_url: productData.image_url || '',
           })
           if (productData.image_url) {
@@ -204,6 +206,7 @@ export default function EditProductPage() {
           description_translations: descriptionTranslations,
           category_id: formData.category_id || null,
           price: parseFloat(formData.price),
+          stock: parseInt(formData.stock) || 0,
           image_url: imageUrl || null,
           updated_at: new Date().toISOString(),
         })
@@ -380,6 +383,29 @@ export default function EditProductPage() {
                 required
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent"
               />
+            </div>
+
+            <div>
+              <label
+                htmlFor="stock"
+                className="block text-xs font-medium uppercase tracking-wide text-gray-700 mb-2"
+              >
+                {t.forms.stock || 'Stock'} *
+              </label>
+              <input
+                id="stock"
+                type="number"
+                min="0"
+                value={formData.stock}
+                onChange={(e) =>
+                  setFormData({ ...formData, stock: e.target.value })
+                }
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                {t.forms.stockDescription || 'Number of items available in stock'}
+              </p>
             </div>
 
             <div>

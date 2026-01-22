@@ -172,12 +172,25 @@ export default function CartPage() {
                             {item.quantity}
                           </span>
                           <button
-                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                            className="w-7 h-7 rounded bg-white hover:bg-nature-green-100 text-nature-green-700 font-medium transition-colors text-sm border border-nature-green-200 hover:border-nature-green-300"
+                            onClick={() => {
+                              const maxQuantity = item.stock || 0
+                              if (item.quantity < maxQuantity) {
+                                updateQuantity(item.id, item.quantity + 1)
+                              } else {
+                                showToast(t.cart.maxStockReached || `Maximum stock available: ${maxQuantity}`, 'error')
+                              }
+                            }}
+                            disabled={(item.stock || 0) <= item.quantity}
+                            className="w-7 h-7 rounded bg-white hover:bg-nature-green-100 text-nature-green-700 font-medium transition-colors text-sm border border-nature-green-200 hover:border-nature-green-300 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             +
                           </button>
                         </div>
+                        {(item.stock || 0) > 0 && (
+                          <span className="text-xs text-gray-500">
+                            {t.products.stock || 'Stock'}: {item.stock}
+                          </span>
+                        )}
 
                         {/* Remove Button */}
                         <button

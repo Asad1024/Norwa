@@ -208,6 +208,7 @@ export default function AdminProductsPage() {
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">{t.adminProducts.category}</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">{t.adminProducts.description}</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">{t.adminProducts.price}</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">{t.products.stock || 'Stock'}</th>
                     <th className="text-right py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">{t.adminProducts.actions}</th>
                   </tr>
                 </thead>
@@ -255,6 +256,17 @@ export default function AdminProductsPage() {
                             ${product.price.toFixed(2)}
                           </div>
                         </td>
+                        <td className="py-3 px-4">
+                          <div className="text-sm text-gray-600">
+                            <span className={`inline-block px-2.5 py-1 rounded text-xs font-medium ${
+                              (product.stock || 0) > 0
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-red-100 text-red-800'
+                            }`}>
+                              {t.products.stock || 'Stock'}: {product.stock || 0}
+                            </span>
+                          </div>
+                        </td>
                         <td className="py-3 px-4 text-right">
                           <div className="flex items-center justify-end gap-2">
                             <NavLink
@@ -262,6 +274,12 @@ export default function AdminProductsPage() {
                               className="px-3 py-1.5 bg-nature-green-600 hover:bg-nature-green-700 text-white text-xs font-medium rounded transition-colors"
                             >
                               {t.adminProducts.edit}
+                            </NavLink>
+                            <NavLink
+                              href={`/admin/products/${product.id}/assign`}
+                              className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded transition-colors"
+                            >
+                              {t.adminProducts.assignUsers || 'Assign Users'}
                             </NavLink>
                             <button
                               onClick={() => handleDeleteClick(product)}

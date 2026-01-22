@@ -59,9 +59,18 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
             <h1 className="text-2xl font-semibold text-gray-900 mb-3">
               {productName}
             </h1>
-            <p className="text-3xl font-semibold text-gray-900 mb-6">
+            <p className="text-3xl font-semibold text-gray-900 mb-4">
               ${product.price.toFixed(2)}
             </p>
+            <div className="mb-4">
+              <span className={`inline-block px-3 py-1.5 rounded text-sm font-medium ${
+                (product.stock || 0) > 0
+                  ? 'bg-green-100 text-green-800'
+                  : 'bg-red-100 text-red-800'
+              }`}>
+                {t.products.stock || 'Stock'}: {(product.stock || 0) > 0 ? product.stock : t.products.outOfStock || 'Out of Stock'}
+              </span>
+            </div>
             <div className="mb-6 flex-1">
               <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
                 {t.common.description || 'Description'}

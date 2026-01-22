@@ -31,6 +31,7 @@ export default function NewProductPage() {
     description_no: '',
     category_id: '',
     price: '',
+    stock: '0',
     image_url: '',
   })
 
@@ -165,6 +166,7 @@ export default function NewProductPage() {
         description_translations: descriptionTranslations,
         category_id: formData.category_id || null,
         price: parseFloat(formData.price),
+        stock: parseInt(formData.stock) || 0,
         image_url: imageUrl || null,
       }).select()
 
@@ -335,6 +337,30 @@ export default function NewProductPage() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm"
                 placeholder="0.00"
               />
+            </div>
+
+            <div>
+              <label
+                htmlFor="stock"
+                className="block text-xs font-medium text-gray-700 mb-2 uppercase tracking-wide"
+              >
+                {t.forms.stock || 'Stock'} *
+              </label>
+              <input
+                id="stock"
+                type="number"
+                min="0"
+                value={formData.stock}
+                onChange={(e) =>
+                  setFormData({ ...formData, stock: e.target.value })
+                }
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm"
+                placeholder="0"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                {t.forms.stockDescription || 'Number of items available in stock'}
+              </p>
             </div>
 
             <div>
