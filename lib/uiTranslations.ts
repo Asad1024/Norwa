@@ -757,7 +757,6 @@ const translations: Record<Language, UITranslations> = {
       adminAlwaysSee: 'Admin always see this product',
       assignUsersDescription: 'Select which users can see this product. If no users are selected, the product will be visible to all users.',
       assignmentsUpdated: 'Product assignments updated successfully',
-      adminAlwaysSee: 'Admin always see this product',
     },
     adminCategories: {
       title: 'Manage Categories',
@@ -1211,7 +1210,6 @@ const translations: Record<Language, UITranslations> = {
       adminAlwaysSee: 'Administrator ser alltid dette produktet',
       assignUsersDescription: 'Velg hvilke brukere som kan se dette produktet. Hvis ingen brukere er valgt, vil produktet være synlig for alle brukere.',
       assignmentsUpdated: 'Produkttildelinger oppdatert',
-      adminAlwaysSee: 'Administrator ser alltid dette produktet',
     },
     adminCategories: {
       title: 'Administrer kategorier',
