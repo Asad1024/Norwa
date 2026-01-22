@@ -57,7 +57,15 @@ function LoginContent() {
         }
       }
 
-      router.push('/')
+      // Get redirect path before clearing
+      const redirectAfterLogin = sessionStorage.getItem('redirectAfterLogin')
+      const redirectPath = redirectAfterLogin || '/'
+      sessionStorage.removeItem('redirectAfterLogin')
+      
+      // Note: PendingCartHandler component will handle adding the item to cart
+      // The item is already stored in sessionStorage as 'addToCartAfterLogin'
+      
+      router.push(redirectPath)
       router.refresh()
     } catch (error: any) {
       hideLoader()

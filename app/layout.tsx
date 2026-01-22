@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import { ToastProvider } from "@/components/ToastProvider";
 import { GlobalLoaderProvider } from "@/components/GlobalLoader";
 import Footer from "@/components/Footer";
+import PendingCartHandler from "@/components/PendingCartHandler";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -28,6 +29,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <GlobalLoaderProvider>
           <ToastProvider>
+            <PendingCartHandler />
             <Navbar />
             <main className="min-h-screen pb-12">
               {children}

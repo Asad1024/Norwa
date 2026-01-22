@@ -36,6 +36,20 @@ export default function AddToCartButton({ product }: AddToCartButtonProps) {
     } = await supabase.auth.getUser()
 
     if (!user) {
+      // Store product info in sessionStorage to add after login
+      // Store the full product data we need for adding to cart
+      const productData = {
+        id: product.id,
+        name: getTranslation(product.name_translations, language),
+        description: getTranslation(product.description_translations, language),
+        price: product.price,
+        stock: product.stock || 0,
+        image_url: product.image_url,
+        quantity: 1,
+      }
+      sessionStorage.setItem('addToCartAfterLogin', JSON.stringify(productData))
+      // Store the current page URL to redirect back after login
+      sessionStorage.setItem('redirectAfterLogin', window.location.pathname)
       router.push('/login')
       return
     }
