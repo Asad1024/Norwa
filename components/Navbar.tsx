@@ -71,13 +71,54 @@ export default function Navbar() {
   }
 
   const isAdmin = user?.user_metadata?.role === 'admin'
+  const [navLinks, setNavLinks] = useState<{ href: string; label: string }[]>([])
 
-  const navLinks = [
-    { href: '/products', label: t.navbar.products },
-    { href: '/about', label: t.navbar.about },
-    { href: '/how-to-use', label: t.navbar.howToUse },
-    { href: '/contact', label: t.navbar.contact },
-  ]
+  useEffect(() => {
+    const fetchNavLinks = async () => {
+      try {
+        const response = await fetch(`/api/nav-links?t=${Date.now()}`, {
+          cache: 'no-store',
+        })
+        if (response.ok) {
+          const data = await response.json()
+          const linkLabels: { [key: string]: string } = {
+            'products': t.navbar.products,
+            'about': t.navbar.about,
+            'how-to-use': t.navbar.howToUse,
+            'contact': t.navbar.contact,
+          }
+          const enabledLinks = (data.navLinks || []).map((link: any) => ({
+            href: link.href,
+            label: linkLabels[link.link_key] || link.link_key,
+          }))
+          setNavLinks(enabledLinks)
+        } else {
+          // Fallback to default links if API fails
+          setNavLinks([
+            { href: '/products', label: t.navbar.products },
+            { href: '/about', label: t.navbar.about },
+            { href: '/how-to-use', label: t.navbar.howToUse },
+            { href: '/contact', label: t.navbar.contact },
+          ])
+        }
+      } catch (error) {
+        console.error('Error fetching nav links:', error)
+        // Fallback to default links on error
+        setNavLinks([
+          { href: '/products', label: t.navbar.products },
+          { href: '/about', label: t.navbar.about },
+          { href: '/how-to-use', label: t.navbar.howToUse },
+          { href: '/contact', label: t.navbar.contact },
+        ])
+      }
+    }
+
+    fetchNavLinks()
+    
+    // Re-fetch nav links every 5 seconds to catch updates
+    const interval = setInterval(fetchNavLinks, 5000)
+    return () => clearInterval(interval)
+  }, [language, t.navbar.products, t.navbar.about, t.navbar.howToUse, t.navbar.contact])
 
   return (
     <nav className="bg-white shadow-sm sticky top-0 z-50 border-b border-gray-200">

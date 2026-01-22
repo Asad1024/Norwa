@@ -18,13 +18,10 @@ CREATE INDEX IF NOT EXISTS idx_product_user_assignments_user_id ON product_user_
 ALTER TABLE product_user_assignments ENABLE ROW LEVEL SECURITY;
 
 -- Policy: Only admins can view and manage assignments
+-- Note: We check user_metadata directly from auth.uid() which is available in RLS context
 CREATE POLICY "Admins can manage product assignments" ON product_user_assignments
   FOR ALL USING (
-    EXISTS (
-      SELECT 1 FROM auth.users
-      WHERE auth.users.id = auth.uid()
-      AND auth.users.raw_user_meta_data->>'role' = 'admin'
-    )
+    (auth.jwt() -> 'user_metadata' ->> 'role') = 'admin'
   );
 
 -- Policy: Users can view their own assignments

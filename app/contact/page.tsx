@@ -1,11 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslations } from '@/hooks/useTranslations'
+import { useLanguageStore } from '@/store/languageStore'
 import { Mail, MapPin, Globe, Send, CheckCircle } from 'lucide-react'
 
 export default function ContactPage() {
   const t = useTranslations()
+  const language = useLanguageStore((state) => state.language)
+  const [pageData, setPageData] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -13,6 +17,26 @@ export default function ContactPage() {
     message: '',
   })
   const [submitted, setSubmitted] = useState(false)
+
+  useEffect(() => {
+    const fetchPageContent = async () => {
+      try {
+        const response = await fetch(`/api/page-content/contact?t=${Date.now()}&lang=${language}`, {
+          cache: 'no-store',
+        })
+        if (response.ok) {
+          const data = await response.json()
+          setPageData(data.page)
+        }
+      } catch (error) {
+        console.error('Error fetching page content:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchPageContent()
+  }, [language])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -43,6 +67,24 @@ export default function ContactPage() {
     }
   }
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-600">Loading...</div>
+      </div>
+    )
+  }
+
+  const content = pageData?.content || {}
+  const title = pageData?.title || t.contact.title
+  const subtitle = pageData?.subtitle || t.contact.subtitle
+  const companyName = content.companyName || t.contact.companyName
+  const address = content.address || t.contact.address
+  const email = content.email || 'post@greenex.no'
+  const website = content.website || 'https://www.greenolyte.no'
+  const websiteLabel = content.websiteLabel || 'www.greenolyte.no'
+  const mapEmbedUrl = content.mapEmbedUrl || 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1997.3456789!2d10.513!3d59.938!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x4641%3A0x0!2sIndustriveien%2031%2C%201337%20Sandvika!5e0!3m2!1sen!2sno!4v1234567890123!5m2!1sen!2sno'
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-12 max-w-6xl">
@@ -51,10 +93,12 @@ export default function ContactPage() {
           <div className="inline-flex items-center justify-center w-12 h-12 bg-gray-100 rounded-lg mb-4">
             <Mail className="w-6 h-6 text-gray-600" />
           </div>
-          <h1 className="text-4xl md:text-5xl font-semibold text-gray-900 mb-3">{t.contact.title}</h1>
-          <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
-            {t.contact.subtitle}
-          </p>
+          <h1 className="text-4xl md:text-5xl font-semibold text-gray-900 mb-3">{title}</h1>
+          {subtitle && (
+            <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
+              {subtitle}
+            </p>
+          )}
         </div>
         <div className="grid lg:grid-cols-2 gap-8">
           {/* Contact Information */}
@@ -68,10 +112,10 @@ export default function ContactPage() {
                 <div className="space-y-6">
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                      {t.contact.companyName}
+                      {companyName}
                     </h3>
                     <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">
-                      {t.contact.address}
+                      {address}
                     </p>
                   </div>
                   
@@ -83,10 +127,10 @@ export default function ContactPage() {
                       <div>
                         <p className="text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">{t.contact.emailLabel}</p>
                         <a
-                          href="mailto:post@greenex.no"
+                          href={`mailto:${email}`}
                           className="text-sm text-gray-900 hover:text-gray-700 font-medium transition-colors"
                         >
-                          post@greenex.no
+                          {email}
                         </a>
                       </div>
                     </div>
@@ -98,12 +142,12 @@ export default function ContactPage() {
                       <div>
                         <p className="text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">{t.contact.corporateWebsite}</p>
                         <a
-                          href="https://www.greenolyte.no"
+                          href={website}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-sm text-gray-900 hover:text-gray-700 font-medium transition-colors"
                         >
-                          www.greenolyte.no
+                          {websiteLabel}
                         </a>
                       </div>
                     </div>
@@ -120,7 +164,7 @@ export default function ContactPage() {
               </h2>
               <div className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200">
                 <iframe
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1997.3456789!2d10.513!3d59.938!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x4641%3A0x0!2sIndustriveien%2031%2C%201337%20Sandvika!5e0!3m2!1sen!2sno!4v1234567890123!5m2!1sen!2sno"
+                  src={mapEmbedUrl}
                   width="100%"
                   height="400"
                   style={{ border: 0 }}

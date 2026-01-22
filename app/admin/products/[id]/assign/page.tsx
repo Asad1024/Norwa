@@ -116,6 +116,12 @@ export default function AssignUsersPage() {
         throw new Error('Not authenticated')
       }
 
+      // Filter out admin users from assignments (admins always see all products)
+      const nonAdminUserIds = Array.from(assignedUserIds).filter((userId) => {
+        const user = users.find((u) => u.id === userId)
+        return user && user.role !== 'admin'
+      })
+
       const response = await fetch(`/api/admin/products/${params.id}/assignments`, {
         method: 'POST',
         headers: {
@@ -123,7 +129,7 @@ export default function AssignUsersPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          user_ids: Array.from(assignedUserIds),
+          user_ids: nonAdminUserIds,
         }),
       })
 
@@ -177,24 +183,35 @@ export default function AssignUsersPage() {
               {users.map((u) => {
                 const isAssigned = assignedUserIds.has(u.id)
                 const isCurrentUser = user?.id === u.id
+                const isAdminUser = u.role === 'admin'
+                
                 return (
                   <div
                     key={u.id}
-                    className={`flex items-center justify-between p-3 rounded-lg border transition-colors cursor-pointer ${
-                      isAssigned
-                        ? 'bg-nature-green-50 border-nature-green-300'
-                        : 'bg-gray-50 border-gray-200 hover:border-gray-300'
+                    className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
+                      isAdminUser
+                        ? 'bg-blue-50 border-blue-200'
+                        : isAssigned
+                        ? 'bg-nature-green-50 border-nature-green-300 cursor-pointer'
+                        : 'bg-gray-50 border-gray-200 hover:border-gray-300 cursor-pointer'
                     }`}
-                    onClick={() => !isCurrentUser && toggleUserAssignment(u.id)}
+                    onClick={() => !isCurrentUser && !isAdminUser && toggleUserAssignment(u.id)}
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
-                        isAssigned
-                          ? 'bg-nature-green-600 border-nature-green-600'
-                          : 'border-gray-300'
-                      }`}>
-                        {isAssigned && <Check className="w-3 h-3 text-white" />}
-                      </div>
+                      {!isAdminUser && (
+                        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
+                          isAssigned
+                            ? 'bg-nature-green-600 border-nature-green-600'
+                            : 'border-gray-300'
+                        }`}>
+                          {isAssigned && <Check className="w-3 h-3 text-white" />}
+                        </div>
+                      )}
+                      {isAdminUser && (
+                        <div className="w-5 h-5 rounded border-2 flex items-center justify-center bg-blue-600 border-blue-600">
+                          <Check className="w-3 h-3 text-white" />
+                        </div>
+                      )}
                       <div>
                         <p className="font-medium text-gray-900 text-sm">
                           {u.email}
@@ -206,9 +223,11 @@ export default function AssignUsersPage() {
                         </p>
                       </div>
                     </div>
-                    {isCurrentUser && (
+                    {isAdminUser ? (
+                      <span className="text-xs text-blue-600 font-medium">{t.adminProducts.adminAlwaysSee || 'Admin always see this product'}</span>
+                    ) : isCurrentUser ? (
                       <span className="text-xs text-gray-400 italic">Cannot assign to yourself</span>
-                    )}
+                    ) : null}
                   </div>
                 )
               })}

@@ -52,36 +52,76 @@ export default function ProductsPage() {
       if (error) throw error
 
       // Filter products based on user assignments
+      // Logic: 
+      // - Admins always see ALL products (assigned or not)
+      // - Products with assignments = only visible to assigned users
+      // - Products without assignments = visible to everyone
       let filteredByAssignment = productsData || []
-      if (currentUser) {
-        // Fetch product assignments for this user
-        const { data: assignments } = await supabase
-          .from('product_user_assignments')
-          .select('product_id')
-          .eq('user_id', currentUser.id)
-
-        const assignedProductIds = new Set((assignments || []).map((a: any) => a.product_id))
-
-        // Filter: show products that are either:
-        // 1. Assigned to this user, OR
-        // 2. Not assigned to anyone (visible to all)
-        if (assignedProductIds.size > 0) {
-          // Get all product IDs that have assignments
-          const { data: allAssignedProducts } = await supabase
-            .from('product_user_assignments')
-            .select('product_id')
-            .distinct()
-
-          const allAssignedProductIds = new Set((allAssignedProducts || []).map((a: any) => a.product_id))
-
-          filteredByAssignment = (productsData || []).filter((p: any) => {
-            // If product has assignments, only show if assigned to this user
-            if (allAssignedProductIds.has(p.id)) {
-              return assignedProductIds.has(p.id)
+      
+      // Check if user is admin
+      const isAdmin = currentUser?.user_metadata?.role === 'admin'
+      
+      // Admins always see all products
+      if (isAdmin) {
+        filteredByAssignment = productsData || []
+      } else {
+        try {
+          // Get all product IDs that have ANY assignments (using API that bypasses RLS)
+          const response = await fetch('/api/products/assigned-ids')
+          if (!response.ok) {
+            console.warn('Failed to fetch assigned product IDs, showing all products')
+            // If API fails, show all products (fallback)
+            filteredByAssignment = productsData || []
+          } else {
+            const result = await response.json()
+            const productsWithAssignments = new Set(result.assignedProductIds || [])
+            
+            // Get current user's assigned products
+            let userAssignedProducts = new Set<string>()
+            if (currentUser) {
+              try {
+                const { data: userAssignments, error: assignmentError } = await supabase
+                  .from('product_user_assignments')
+                  .select('product_id')
+                  .eq('user_id', currentUser.id)
+                
+                if (assignmentError) {
+                  console.error('Error fetching user assignments:', assignmentError)
+                } else if (userAssignments && Array.isArray(userAssignments)) {
+                  // Ensure we convert to strings to match product.id format
+                  userAssignedProducts = new Set(userAssignments.map((a: any) => String(a.product_id)))
+                }
+              } catch (err) {
+                console.error('Exception fetching user assignments:', err)
+              }
             }
-            // If product has no assignments, show to everyone
-            return true
-          })
+            
+            // Ensure product IDs are strings for comparison
+            const productsWithAssignmentsStr = new Set(
+              Array.from(productsWithAssignments).map(id => String(id))
+            )
+            
+            // Filter products
+            filteredByAssignment = (productsData || []).filter((product: any) => {
+              const productIdStr = String(product.id)
+              
+              // If this product has assignments
+              if (productsWithAssignmentsStr.has(productIdStr)) {
+                // Only show if user is logged in AND assigned to this product
+                if (currentUser) {
+                  return userAssignedProducts.has(productIdStr)
+                }
+                // Not logged in and product has assignments = hide it
+                return false
+              }
+              // Product has no assignments = show to everyone
+              return true
+            })
+          }
+        } catch (error) {
+          console.error('Error filtering products by assignments:', error)
+          // If error occurs, show all products (fallback)
+          filteredByAssignment = productsData || []
         }
       }
 

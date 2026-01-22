@@ -11,6 +11,7 @@ import { createTranslations, getTranslation } from '@/lib/translations'
 import { useTranslations } from '@/hooks/useTranslations'
 import { useLanguageStore } from '@/store/languageStore'
 import BackButton from '@/components/BackButton'
+import { Languages } from 'lucide-react'
 
 export default function EditProductPage() {
   const router = useRouter()
@@ -23,6 +24,7 @@ export default function EditProductPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [translating, setTranslating] = useState(false)
   const [categories, setCategories] = useState<Category[]>([])
   const [error, setError] = useState('')
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -91,6 +93,55 @@ export default function EditProductPage() {
 
     fetchData()
   }, [params.id, supabase, showLoader, hideLoader])
+
+  const translateText = async (text: string): Promise<string> => {
+    if (!text || !text.trim()) return ''
+    try {
+      const response = await fetch('/api/translate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: text.trim(),
+          from: 'en',
+          to: 'no',
+        }),
+      })
+      const data = await response.json()
+      return data.translated || text
+    } catch (error) {
+      console.error('Translation error:', error)
+      return text
+    }
+  }
+
+  const handleTranslateToNO = async () => {
+    if (activeLanguage !== 'no') {
+      setActiveLanguage('no')
+      await new Promise(resolve => setTimeout(resolve, 100))
+    }
+
+    setTranslating(true)
+    try {
+      const updates: any = {}
+      
+      if (formData.name_en) {
+        updates.name_no = await translateText(formData.name_en)
+      }
+      if (formData.description_en) {
+        updates.description_no = await translateText(formData.description_en)
+      }
+
+      setFormData({ ...formData, ...updates })
+      showToast(t.forms.translateToNO || 'Translated to Norwegian', 'success')
+    } catch (error: any) {
+      console.error('Translation error:', error)
+      showToast('Failed to translate. Please translate manually.', 'error')
+    } finally {
+      setTranslating(false)
+    }
+  }
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -254,29 +305,42 @@ export default function EditProductPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Language Tabs */}
-            <div className="flex space-x-1 border-b border-gray-200 mb-4">
-              <button
-                type="button"
-                onClick={() => setActiveLanguage('en')}
-                className={`px-3 py-2 text-sm font-medium transition-colors ${
-                  activeLanguage === 'en'
-                    ? 'border-b-2 border-gray-900 text-gray-900'
-                    : 'text-gray-500 hover:text-gray-900'
-                }`}
-              >
-                {t.forms.english}
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveLanguage('no')}
-                className={`px-3 py-2 text-sm font-medium transition-colors ${
-                  activeLanguage === 'no'
-                    ? 'border-b-2 border-gray-900 text-gray-900'
-                    : 'text-gray-500 hover:text-gray-900'
-                }`}
-              >
-                {t.forms.norwegian}
-              </button>
+            <div className="flex items-center justify-between border-b border-gray-200 mb-4">
+              <div className="flex space-x-1">
+                <button
+                  type="button"
+                  onClick={() => setActiveLanguage('en')}
+                  className={`px-3 py-2 text-sm font-medium transition-colors ${
+                    activeLanguage === 'en'
+                      ? 'border-b-2 border-gray-900 text-gray-900'
+                      : 'text-gray-500 hover:text-gray-900'
+                  }`}
+                >
+                  {t.forms.english}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveLanguage('no')}
+                  className={`px-3 py-2 text-sm font-medium transition-colors ${
+                    activeLanguage === 'no'
+                      ? 'border-b-2 border-gray-900 text-gray-900'
+                      : 'text-gray-500 hover:text-gray-900'
+                  }`}
+                >
+                  {t.forms.norwegian}
+                </button>
+              </div>
+              {activeLanguage === 'no' && (
+                <button
+                  type="button"
+                  onClick={handleTranslateToNO}
+                  disabled={translating}
+                  className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-nature-green-700 bg-nature-green-50 hover:bg-nature-green-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Languages className="w-4 h-4" />
+                  {translating ? t.forms.translating : t.forms.translateToNO}
+                </button>
+              )}
             </div>
 
             {/* Product Name */}

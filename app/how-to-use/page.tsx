@@ -1,11 +1,15 @@
 'use client'
 
 import { useTranslations } from '@/hooks/useTranslations'
+import { useLanguageStore } from '@/store/languageStore'
 import { Play, Pause } from 'lucide-react'
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 export default function HowToUsePage() {
   const t = useTranslations()
+  const language = useLanguageStore((state) => state.language)
+  const [pageData, setPageData] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
   
   // Professional Video component with actual video playback
   const VideoPlayer = ({ title, description, videoUrl }: { title?: string; description?: string; videoUrl?: string }) => {
@@ -87,6 +91,75 @@ export default function HowToUsePage() {
       </div>
     )
   }
+
+  useEffect(() => {
+    const fetchPageContent = async () => {
+      try {
+        const response = await fetch(`/api/page-content/how-to-use?t=${Date.now()}&lang=${language}`, {
+          cache: 'no-store',
+        })
+        if (response.ok) {
+          const data = await response.json()
+          setPageData(data.page)
+        }
+      } catch (error) {
+        console.error('Error fetching page content:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchPageContent()
+  }, [language])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-600">Loading...</div>
+      </div>
+    )
+  }
+
+  const content = pageData?.content || {}
+  const title = pageData?.title || t.howToUse.title
+  const subtitle = pageData?.subtitle || t.howToUse.subtitle
+  const sections = content.sections || []
+
+  // Fallback to default sections if none exist
+  if (sections.length === 0) {
+    sections.push({
+      title: t.howToUse.fettfjerner,
+      description: t.howToUse.fettfjernerDesc,
+      videos: [
+        {
+          title: t.howToUse.introVideoTitle,
+          description: t.howToUse.introVideoDesc,
+          url: 'https://video.wixstatic.com/video/01bed9_e15acfaf3db649cd890cfb7e920fb016/720p/mp4/file.mp4'
+        },
+        {
+          title: t.howToUse.quickStartTitle,
+          description: t.howToUse.quickStartDesc,
+          url: 'https://video.wixstatic.com/video/01bed9_bb35b5284c2141a7b05437d2eabb0105/1080p/mp4/file.mp4'
+        }
+      ]
+    })
+    sections.push({
+      title: t.howToUse.grillRenser,
+      description: t.howToUse.grillRenserDesc,
+      videos: [
+        {
+          title: t.howToUse.fettfjernerDemoTitle,
+          description: t.howToUse.fettfjernerDemoDesc,
+          url: 'https://video.wixstatic.com/video/01bed9_9e51ecc36ca946b291214f5c80df029f/720p/mp4/file.mp4'
+        },
+        {
+          title: t.howToUse.fettfjernerUsageTitle,
+          description: t.howToUse.fettfjernerUsageDesc,
+          url: 'https://video.wixstatic.com/video/01bed9_7e6cc7dfb63b432d915e826083ce960e/1080p/mp4/file.mp4'
+        }
+      ]
+    })
+  }
   
   return (
     <div className="min-h-screen bg-gray-50">
@@ -94,67 +167,52 @@ export default function HowToUsePage() {
         {/* Page Header */}
         <div className="text-center mb-10">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
-            {t.howToUse.title}
+            {title}
           </h1>
-          <p className="text-base text-gray-600 max-w-xl mx-auto">
-            {t.howToUse.subtitle}
-          </p>
+          {subtitle && (
+            <p className="text-base text-gray-600 max-w-xl mx-auto">
+              {subtitle}
+            </p>
+          )}
         </div>
 
-        {/* NORWA Fettfjerner Section */}
-        <section className="mb-12">
-          <div className="mb-6">
-            <h2 className="text-xl md:text-2xl font-semibold text-gray-900 mb-2">
-              <span className="text-nature-green-600">{t.howToUse.fettfjerner}</span>
-            </h2>
-            <p className="text-sm text-gray-600 max-w-2xl">
-              {t.howToUse.fettfjernerDesc}
-            </p>
-          </div>
-          <div className="grid md:grid-cols-2 gap-5">
-            <VideoPlayer 
-              title={t.howToUse.introVideoTitle}
-              description={t.howToUse.introVideoDesc}
-              videoUrl="https://video.wixstatic.com/video/01bed9_e15acfaf3db649cd890cfb7e920fb016/720p/mp4/file.mp4"
-            />
-            <VideoPlayer 
-              title={t.howToUse.quickStartTitle}
-              description={t.howToUse.quickStartDesc}
-              videoUrl="https://video.wixstatic.com/video/01bed9_bb35b5284c2141a7b05437d2eabb0105/1080p/mp4/file.mp4"
-            />
-          </div>
-        </section>
+        {/* Sections */}
+        {sections.map((section: any, sectionIdx: number) => (
+          <div key={sectionIdx}>
+            {sectionIdx > 0 && (
+              <div className="relative my-10">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-200"></div>
+                </div>
+              </div>
+            )}
 
-        {/* Divider */}
-        <div className="relative my-10">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-200"></div>
+            <section className="mb-12">
+              <div className="mb-6">
+                <h2 className="text-xl md:text-2xl font-semibold text-gray-900 mb-2">
+                  <span className="text-nature-green-600">{section.title}</span>
+                </h2>
+                {section.description && (
+                  <p className="text-sm text-gray-600 max-w-2xl">
+                    {section.description}
+                  </p>
+                )}
+              </div>
+              {section.videos && section.videos.length > 0 && (
+                <div className="grid md:grid-cols-2 gap-5">
+                  {section.videos.map((video: any, videoIdx: number) => (
+                    <VideoPlayer 
+                      key={videoIdx}
+                      title={video.title}
+                      description={video.description}
+                      videoUrl={video.url}
+                    />
+                  ))}
+                </div>
+              )}
+            </section>
           </div>
-        </div>
-
-        {/* NORWA Grill Renser Section */}
-        <section className="mb-12">
-          <div className="mb-6">
-            <h2 className="text-xl md:text-2xl font-semibold text-gray-900 mb-2">
-              <span className="text-nature-green-600">{t.howToUse.grillRenser}</span>
-            </h2>
-            <p className="text-sm text-gray-600 max-w-2xl">
-              {t.howToUse.grillRenserDesc}
-            </p>
-          </div>
-          <div className="grid md:grid-cols-2 gap-5">
-            <VideoPlayer 
-              title={t.howToUse.fettfjernerDemoTitle}
-              description={t.howToUse.fettfjernerDemoDesc}
-              videoUrl="https://video.wixstatic.com/video/01bed9_9e51ecc36ca946b291214f5c80df029f/720p/mp4/file.mp4"
-            />
-            <VideoPlayer 
-              title={t.howToUse.fettfjernerUsageTitle}
-              description={t.howToUse.fettfjernerUsageDesc}
-              videoUrl="https://video.wixstatic.com/video/01bed9_7e6cc7dfb63b432d915e826083ce960e/1080p/mp4/file.mp4"
-            />
-          </div>
-        </section>
+        ))}
       </div>
     </div>
   )

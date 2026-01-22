@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useGlobalLoader } from '@/components/GlobalLoader'
 import { useTranslations } from '@/hooks/useTranslations'
-import { Package, ShoppingCart, FolderOpen, Clock, Plus, Users, ClipboardList, ArrowRight, Shield, ShieldOff, CheckCircle, XCircle, Trash2 } from 'lucide-react'
+import NavLink from '@/components/NavLink'
+import { Package, ShoppingCart, FolderOpen, Clock, Plus, Users, ClipboardList, ArrowRight, Shield, ShieldOff, CheckCircle, XCircle, Trash2, Menu, FileText } from 'lucide-react'
 
 export default function AdminDashboard() {
   const router = useRouter()
@@ -45,6 +46,8 @@ export default function AdminDashboard() {
     message: '',
     type: 'success',
   })
+  const [navLinks, setNavLinks] = useState<any[]>([])
+  const [savingNavLinks, setSavingNavLinks] = useState(false)
   const t = useTranslations()
 
   useEffect(() => {
@@ -95,6 +98,9 @@ export default function AdminDashboard() {
         
         // Fetch users
         await fetchUsers(user)
+        
+        // Fetch navigation links
+        await fetchNavLinks()
       } catch (error) {
         console.error('Error fetching dashboard data:', error)
       } finally {
@@ -280,6 +286,62 @@ export default function AdminDashboard() {
     })
     setConfirmEnabled(true) // Enable button for delete
     setIsSaving(false) // Reset saving state
+  }
+
+  const fetchNavLinks = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+
+      const response = await fetch('/api/admin/nav-links', {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setNavLinks(data.navLinks || [])
+      }
+    } catch (error) {
+      console.error('Error fetching nav links:', error)
+    }
+  }
+
+  const toggleNavLink = async (linkId: string, currentEnabled: boolean) => {
+    setSavingNavLinks(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        setSavingNavLinks(false)
+        return
+      }
+
+      const response = await fetch('/api/admin/nav-links', {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          updates: [{ id: linkId, is_enabled: !currentEnabled }],
+        }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        showNotification(t.admin.navLinksUpdated || 'Navigation links updated successfully', 'success')
+        await fetchNavLinks()
+      } else {
+        showNotification(data.error || 'Failed to update navigation links', 'error')
+      }
+    } catch (error: any) {
+      console.error('Error updating nav links:', error)
+      showNotification('Failed to update navigation links', 'error')
+    } finally {
+      setSavingNavLinks(false)
+    }
   }
 
   const statsCards = [
@@ -501,6 +563,82 @@ export default function AdminDashboard() {
             </div>
           </div>
         )}
+
+        {/* Navigation Links Management */}
+        <div className="bg-white rounded-lg shadow-sm p-6 mb-6 border border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <Menu className="w-5 h-5 text-gray-600" />
+            {t.admin.navLinksManagement || 'Navigation Links'}
+          </h2>
+          <div className="mb-4">
+            <NavLink
+              href="/admin/pages"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-nature-green-50 hover:bg-nature-green-100 text-nature-green-700 font-medium rounded-lg transition-colors text-sm"
+            >
+              <FileText className="w-4 h-4" />
+              {t.admin.manageNavbarPages || 'Manage Navbar Pages'}
+            </NavLink>
+          </div>
+          <p className="text-sm text-gray-600 mb-4">
+            {t.admin.navLinksDescription || 'Enable or disable navigation links. Disabled links will not appear in the navigation menu.'}
+          </p>
+          {navLinks.length > 0 ? (
+            <div className="space-y-3">
+              {navLinks.map((link) => {
+                const getLinkLabel = (key: string) => {
+                  const labels: { [key: string]: string } = {
+                    'products': t.navbar.products,
+                    'about': t.navbar.about,
+                    'how-to-use': t.navbar.howToUse,
+                    'contact': t.navbar.contact,
+                  }
+                  return labels[key] || key
+                }
+                return (
+                  <div
+                    key={link.id}
+                    className="flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-11 h-11 rounded-lg flex items-center justify-center transition-colors ${
+                        link.is_enabled ? 'bg-green-100' : 'bg-gray-100'
+                      }`}>
+                        {link.is_enabled ? (
+                          <CheckCircle className="w-5 h-5 text-green-600" />
+                        ) : (
+                          <XCircle className="w-5 h-5 text-gray-400" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900 text-sm">
+                          {getLinkLabel(link.link_key)}
+                        </p>
+                        <p className="text-xs text-gray-500">{link.href}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => toggleNavLink(link.id, link.is_enabled)}
+                      disabled={savingNavLinks}
+                      className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-nature-green-500 focus:ring-offset-2 disabled:opacity-50 ${
+                        link.is_enabled ? 'bg-nature-green-600' : 'bg-gray-200'
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                          link.is_enabled ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500 text-sm">
+              <p>{t.admin.noNavLinksFound || 'No navigation links found'}</p>
+            </div>
+          )}
+        </div>
 
         {/* All Users Section */}
         <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">

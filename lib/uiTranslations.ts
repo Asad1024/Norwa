@@ -259,6 +259,32 @@ export interface UITranslations {
       deleteUserMessage: string
       userDeleted: string
       deleteError: string
+      navLinksManagement: string
+      navLinksDescription: string
+      navLinksUpdated: string
+      noNavLinksFound: string
+      manageNavbarPages: string
+    }
+    adminPages: {
+      title: string
+      subtitle: string
+      editPage: string
+      editDescription: string
+      titleLabel: string
+      titlePlaceholder: string
+      subtitleLabel: string
+      subtitlePlaceholder: string
+      contentLabel: string
+      contentPlaceholder: string
+      contentHint: string
+      contentUpdated: string
+      noPages: string
+      pageNotFound: string
+      translatedToNO: string
+      showInNavigation: string
+      navLinkEnabled: string
+      navLinkDisabled: string
+      navLinkNotConfigured: string
     }
   adminProducts: {
     title: string
@@ -268,6 +294,7 @@ export interface UITranslations {
     assignUsers: string
     assignUsersDescription: string
     assignmentsUpdated: string
+    adminAlwaysSee: string
     name: string
     description: string
     price: string
@@ -324,6 +351,8 @@ export interface UITranslations {
     englishRequired: string
     norwegianOptional: string
     autoFillMessage: string
+    translateToNO: string
+    translating: string
   }
   modal: {
     ok: string
@@ -685,6 +714,32 @@ const translations: Record<Language, UITranslations> = {
       deleteUserMessage: 'Are you sure you want to permanently delete this user? This will delete all their orders, addresses, and cart items. This action cannot be undone.',
       userDeleted: 'User and all related data deleted successfully',
       deleteError: 'Failed to delete user',
+      navLinksManagement: 'Navigation Links',
+      navLinksDescription: 'Enable or disable navigation links. Disabled links will not appear in the navigation menu.',
+      navLinksUpdated: 'Navigation links updated successfully',
+      noNavLinksFound: 'No navigation links found',
+      manageNavbarPages: 'Manage Navbar Pages',
+    },
+    adminPages: {
+      title: 'Manage Pages',
+      subtitle: 'Edit content for About, Contact, and How to Use pages',
+      editPage: 'Edit Page',
+      editDescription: 'Update the content for this page',
+      titleLabel: 'Title',
+      titlePlaceholder: 'Page title',
+      subtitleLabel: 'Subtitle',
+      subtitlePlaceholder: 'Page subtitle (optional)',
+      contentLabel: 'Content (JSON)',
+      contentPlaceholder: 'Enter JSON content...',
+      contentHint: 'Content must be valid JSON format',
+      contentUpdated: 'Page content updated successfully',
+      noPages: 'No pages found',
+      pageNotFound: 'Page not found',
+      translatedToNO: 'Content translated to Norwegian',
+      showInNavigation: 'Show in Navigation',
+      navLinkEnabled: 'Page is now visible in navigation',
+      navLinkDisabled: 'Page is now hidden from navigation',
+      navLinkNotConfigured: 'Navigation link not configured',
     },
     adminProducts: {
       title: 'Manage Products',
@@ -699,8 +754,10 @@ const translations: Record<Language, UITranslations> = {
       edit: 'Edit',
       delete: 'Delete',
       assignUsers: 'Assign Users',
+      adminAlwaysSee: 'Admin always see this product',
       assignUsersDescription: 'Select which users can see this product. If no users are selected, the product will be visible to all users.',
       assignmentsUpdated: 'Product assignments updated successfully',
+      adminAlwaysSee: 'Admin always see this product',
     },
     adminCategories: {
       title: 'Manage Categories',
@@ -750,6 +807,8 @@ const translations: Record<Language, UITranslations> = {
       englishRequired: '(required)',
       norwegianOptional: '(optional)',
       autoFillMessage: 'Optional: If left empty, English text will be used',
+      translateToNO: 'Translate from English',
+      translating: 'Translating...',
     },
     modal: {
       ok: 'OK',
@@ -985,6 +1044,7 @@ const translations: Record<Language, UITranslations> = {
       removedFromCart: 'fjernet fra handlekurv',
       orderSummary: 'Ordreoversikt',
       items: 'Varer',
+      maxStockReached: 'Maksimalt lager tilgjengelig nådd',
       proceedToCheckout: 'Fortsett til kassen',
       continueShopping: 'Fortsett å handle',
     },
@@ -1108,6 +1168,32 @@ const translations: Record<Language, UITranslations> = {
       deleteUserMessage: 'Er du sikker på at du vil slette denne brukeren permanent? Dette vil slette alle deres bestillinger, adresser og handlekurvvarer. Denne handlingen kan ikke angres.',
       userDeleted: 'Bruker og all relatert data slettet',
       deleteError: 'Kunne ikke slette bruker',
+      navLinksManagement: 'Navigasjonslenker',
+      navLinksDescription: 'Aktiver eller deaktiver navigasjonslenker. Deaktiverte lenker vil ikke vises i navigasjonsmenyen.',
+      navLinksUpdated: 'Navigasjonslenker oppdatert',
+      noNavLinksFound: 'Ingen navigasjonslenker funnet',
+      manageNavbarPages: 'Administrer navigasjonssider',
+    },
+    adminPages: {
+      title: 'Administrer sider',
+      subtitle: 'Rediger innhold for Om oss, Kontakt og Hvordan bruke-sider',
+      editPage: 'Rediger side',
+      editDescription: 'Oppdater innholdet for denne siden',
+      titleLabel: 'Tittel',
+      titlePlaceholder: 'Sidetittel',
+      subtitleLabel: 'Undertittel',
+      subtitlePlaceholder: 'Sideundertittel (valgfritt)',
+      contentLabel: 'Innhold (JSON)',
+      contentPlaceholder: 'Skriv inn JSON-innhold...',
+      contentHint: 'Innholdet må være i gyldig JSON-format',
+      contentUpdated: 'Sideinnhold oppdatert',
+      noPages: 'Ingen sider funnet',
+      pageNotFound: 'Side ikke funnet',
+      translatedToNO: 'Innhold oversatt til norsk',
+      showInNavigation: 'Vis i navigasjon',
+      navLinkEnabled: 'Siden er nå synlig i navigasjonen',
+      navLinkDisabled: 'Siden er nå skjult fra navigasjonen',
+      navLinkNotConfigured: 'Navigasjonslenke ikke konfigurert',
     },
     adminProducts: {
       title: 'Administrer produkter',
@@ -1122,8 +1208,10 @@ const translations: Record<Language, UITranslations> = {
       edit: 'Rediger',
       delete: 'Slett',
       assignUsers: 'Tildel brukere',
+      adminAlwaysSee: 'Administrator ser alltid dette produktet',
       assignUsersDescription: 'Velg hvilke brukere som kan se dette produktet. Hvis ingen brukere er valgt, vil produktet være synlig for alle brukere.',
       assignmentsUpdated: 'Produkttildelinger oppdatert',
+      adminAlwaysSee: 'Administrator ser alltid dette produktet',
     },
     adminCategories: {
       title: 'Administrer kategorier',
@@ -1173,6 +1261,8 @@ const translations: Record<Language, UITranslations> = {
       englishRequired: '(påkrevd)',
       norwegianOptional: '(valgfritt)',
       autoFillMessage: 'Valgfritt: Hvis den står tom, vil engelsk tekst brukes',
+      translateToNO: 'Oversett fra engelsk',
+      translating: 'Oversetter...',
     },
     modal: {
       ok: 'OK',

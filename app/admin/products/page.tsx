@@ -258,7 +258,7 @@ export default function AdminProductsPage() {
                         </td>
                         <td className="py-3 px-4">
                           <div className="text-sm text-gray-600">
-                            <span className={`inline-block px-2.5 py-1 rounded text-xs font-medium ${
+                            <span className={`inline-block px-2.5 py-1 rounded text-xs font-medium whitespace-nowrap ${
                               (product.stock || 0) > 0
                                 ? 'bg-green-100 text-green-800'
                                 : 'bg-red-100 text-red-800'
@@ -271,19 +271,19 @@ export default function AdminProductsPage() {
                           <div className="flex items-center justify-end gap-2">
                             <NavLink
                               href={`/admin/products/${product.id}/edit`}
-                              className="px-3 py-1.5 bg-nature-green-600 hover:bg-nature-green-700 text-white text-xs font-medium rounded transition-colors"
+                              className="px-3 py-1.5 bg-nature-green-600 hover:bg-nature-green-700 text-white text-xs font-medium rounded transition-colors whitespace-nowrap h-7 flex items-center justify-center"
                             >
                               {t.adminProducts.edit}
                             </NavLink>
                             <NavLink
                               href={`/admin/products/${product.id}/assign`}
-                              className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded transition-colors"
+                              className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded transition-colors whitespace-nowrap h-7 flex items-center justify-center"
                             >
                               {t.adminProducts.assignUsers || 'Assign Users'}
                             </NavLink>
                             <button
                               onClick={() => handleDeleteClick(product)}
-                              className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded transition-colors"
+                              className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded transition-colors whitespace-nowrap h-7 flex items-center justify-center"
                             >
                               {t.adminProducts.delete}
                             </button>
