@@ -21,37 +21,57 @@ export async function GET(request: Request) {
       const user = data.user
       const metadata = user.user_metadata || {}
       
+      // FIRST: Check if user is banned/deactivated - this must happen before any other checks
+      let isDeactivated = false
+      
       // Check if user is banned/deactivated using admin client for accurate status
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
       const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
       
       if (supabaseUrl && serviceRoleKey) {
-        const supabaseAdmin = createAdminClient(supabaseUrl, serviceRoleKey, {
-          auth: {
-            autoRefreshToken: false,
-            persistSession: false,
-          },
-        })
-        
-        // Get the latest user data from admin API to ensure we have the most up-to-date status
-        const { data: adminUserData, error: adminError } = await supabaseAdmin.auth.admin.getUserById(user.id)
-        
-        if (!adminError && adminUserData?.user) {
-          const adminUser = adminUserData.user
-          const adminMetadata = adminUser.user_metadata || {}
+        try {
+          const supabaseAdmin = createAdminClient(supabaseUrl, serviceRoleKey, {
+            auth: {
+              autoRefreshToken: false,
+              persistSession: false,
+            },
+          })
           
-          // Check if user is banned/deactivated
-          if (adminUser.banned_until || adminMetadata.is_active === false) {
-            await supabase.auth.signOut()
-            return NextResponse.redirect(`${origin}/login?error=account_deactivated`)
+          // Get the latest user data from admin API to ensure we have the most up-to-date status
+          const { data: adminUserData, error: adminError } = await supabaseAdmin.auth.admin.getUserById(user.id)
+          
+          if (!adminError && adminUserData?.user) {
+            const adminUser = adminUserData.user
+            const adminMetadata = adminUser.user_metadata || {}
+            
+            // Check if user is banned/deactivated
+            if (adminUser.banned_until || adminMetadata.is_active === false) {
+              isDeactivated = true
+            }
+          } else {
+            // If admin check fails, fallback to checking user metadata
+            if (user.banned_until || metadata.is_active === false) {
+              isDeactivated = true
+            }
+          }
+        } catch (error) {
+          console.error('Error checking user status with admin client:', error)
+          // Fallback to checking user metadata if admin client fails
+          if (user.banned_until || metadata.is_active === false) {
+            isDeactivated = true
           }
         }
       } else {
         // Fallback to checking metadata if admin client is not available
         if (user.banned_until || metadata.is_active === false) {
-          await supabase.auth.signOut()
-          return NextResponse.redirect(`${origin}/login?error=account_deactivated`)
+          isDeactivated = true
         }
+      }
+      
+      // If user is deactivated, sign out and redirect to login with error - MUST RETURN HERE
+      if (isDeactivated) {
+        await supabase.auth.signOut()
+        return NextResponse.redirect(`${origin}/login?error=account_deactivated`)
       }
       
       // Check if user is from Google OAuth and doesn't have name or phone
