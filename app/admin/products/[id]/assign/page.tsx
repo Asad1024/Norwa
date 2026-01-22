@@ -80,7 +80,7 @@ export default function AssignUsersPage() {
 
           if (assignmentsResponse.ok) {
             const assignmentsData = await assignmentsResponse.json()
-            const assignedIds = new Set((assignmentsData.assignments || []).map((a: any) => a.user_id))
+            const assignedIds = new Set<string>((assignmentsData.assignments || []).map((a: any) => String(a.user_id)))
             setAssignedUserIds(assignedIds)
           }
         }
