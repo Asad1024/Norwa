@@ -67,11 +67,13 @@ export default function ProductsPage() {
       } else {
         try {
           // Get all product IDs that have ANY assignments (using API that bypasses RLS)
-          const response = await fetch('/api/products/assigned-ids')
+          const response = await fetch('/api/products/assigned-ids', {
+            cache: 'no-store',
+          })
           if (!response.ok) {
-            console.warn('Failed to fetch assigned product IDs, showing all products')
-            // If API fails, show all products (fallback)
-            filteredByAssignment = productsData || []
+            console.warn('Failed to fetch assigned product IDs, hiding products with assignments for safety')
+            // If API fails, be safe and hide all products (better than showing restricted products)
+            filteredByAssignment = []
           } else {
             const result = await response.json()
             const productsWithAssignments = new Set(result.assignedProductIds || [])
@@ -87,17 +89,21 @@ export default function ProductsPage() {
                 
                 if (assignmentError) {
                   console.error('Error fetching user assignments:', assignmentError)
+                  // If we can't fetch assignments, hide all products with assignments for safety
+                  userAssignedProducts = new Set<string>()
                 } else if (userAssignments && Array.isArray(userAssignments)) {
                   // Ensure we convert to strings to match product.id format
                   userAssignedProducts = new Set(userAssignments.map((a: any) => String(a.product_id)))
                 }
               } catch (err) {
                 console.error('Exception fetching user assignments:', err)
+                // On error, hide all products with assignments for safety
+                userAssignedProducts = new Set<string>()
               }
             }
             
             // Ensure product IDs are strings for comparison
-            const productsWithAssignmentsStr = new Set(
+            const productsWithAssignmentsStr = new Set<string>(
               Array.from(productsWithAssignments).map(id => String(id))
             )
             
@@ -108,8 +114,11 @@ export default function ProductsPage() {
               // If this product has assignments
               if (productsWithAssignmentsStr.has(productIdStr)) {
                 // Only show if user is logged in AND assigned to this product
+                // Admins are handled above, so we know this is not an admin
                 if (currentUser) {
-                  return userAssignedProducts.has(productIdStr)
+                  const isAssigned = userAssignedProducts.has(productIdStr)
+                  // Only return true if user is explicitly assigned
+                  return isAssigned
                 }
                 // Not logged in and product has assignments = hide it
                 return false
