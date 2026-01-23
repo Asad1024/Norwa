@@ -24,7 +24,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
     : product.category || null
   const emoji = getCategoryEmoji(categoryName || '', product.category_data?.icon)
 
-  const handleDownloadTechnicalData = async (e: React.MouseEvent<HTMLAnchorElement>) => {
+  const handleDownloadTechnicalData = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault()
     const technicalDataUrl = (product as any).technical_data_url
     if (!technicalDataUrl) return
