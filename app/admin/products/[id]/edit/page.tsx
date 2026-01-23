@@ -177,7 +177,7 @@ export default function EditProductPage() {
 
   const handleRemoveImage = () => {
     setSelectedFile(null)
-    setImagePreview(formData.image_url || null)
+    setImagePreview(currentImageUrl || null)
   }
 
   const handleTechnicalFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
