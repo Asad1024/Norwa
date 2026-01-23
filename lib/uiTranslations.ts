@@ -565,6 +565,7 @@ const translations: Record<Language, UITranslations> = {
       viewDetails: 'View Details',
       stock: 'Stock',
       outOfStock: 'Out of Stock',
+      comingSoon: 'Coming Soon',
     },
     productDetail: {
       description: 'Description',
@@ -1018,6 +1019,7 @@ const translations: Record<Language, UITranslations> = {
       viewDetails: 'Vis detaljer',
       stock: 'Lager',
       outOfStock: 'Utsolgt',
+      comingSoon: 'Kommer Snart',
     },
     productDetail: {
       description: 'Beskrivelse',

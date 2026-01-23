@@ -222,43 +222,25 @@ export default function AdminEditPagePage() {
       const sections = content.sections || []
       const contentNo = pageData.content?.no || {}
       const sectionsNo = contentNo.sections || []
+      // Store sections as array in formData
       setFormData({
         title_en: titleTranslations.en || '',
         title_no: titleTranslations.no || '',
         subtitle_en: subtitleTranslations.en || '',
         subtitle_no: subtitleTranslations.no || '',
-        // Section 1 - English
-        section1Title_en: sections[0]?.title || '',
-        section1Description_en: sections[0]?.description || '',
-        section1Video1Title_en: sections[0]?.videos?.[0]?.title || '',
-        section1Video1Description_en: sections[0]?.videos?.[0]?.description || '',
-        section1Video1Url: sections[0]?.videos?.[0]?.url || '',
-        section1Video2Title_en: sections[0]?.videos?.[1]?.title || '',
-        section1Video2Description_en: sections[0]?.videos?.[1]?.description || '',
-        section1Video2Url: sections[0]?.videos?.[1]?.url || '',
-        // Section 1 - Norwegian
-        section1Title_no: sectionsNo[0]?.title || sections[0]?.title || '',
-        section1Description_no: sectionsNo[0]?.description || sections[0]?.description || '',
-        section1Video1Title_no: sectionsNo[0]?.videos?.[0]?.title || sections[0]?.videos?.[0]?.title || '',
-        section1Video1Description_no: sectionsNo[0]?.videos?.[0]?.description || sections[0]?.videos?.[0]?.description || '',
-        section1Video2Title_no: sectionsNo[0]?.videos?.[1]?.title || sections[0]?.videos?.[1]?.title || '',
-        section1Video2Description_no: sectionsNo[0]?.videos?.[1]?.description || sections[0]?.videos?.[1]?.description || '',
-        // Section 2 - English
-        section2Title_en: sections[1]?.title || '',
-        section2Description_en: sections[1]?.description || '',
-        section2Video1Title_en: sections[1]?.videos?.[0]?.title || '',
-        section2Video1Description_en: sections[1]?.videos?.[0]?.description || '',
-        section2Video1Url: sections[1]?.videos?.[0]?.url || '',
-        section2Video2Title_en: sections[1]?.videos?.[1]?.title || '',
-        section2Video2Description_en: sections[1]?.videos?.[1]?.description || '',
-        section2Video2Url: sections[1]?.videos?.[1]?.url || '',
-        // Section 2 - Norwegian
-        section2Title_no: sectionsNo[1]?.title || sections[1]?.title || '',
-        section2Description_no: sectionsNo[1]?.description || sections[1]?.description || '',
-        section2Video1Title_no: sectionsNo[1]?.videos?.[0]?.title || sections[1]?.videos?.[0]?.title || '',
-        section2Video1Description_no: sectionsNo[1]?.videos?.[0]?.description || sections[1]?.videos?.[0]?.description || '',
-        section2Video2Title_no: sectionsNo[1]?.videos?.[1]?.title || sections[1]?.videos?.[1]?.title || '',
-        section2Video2Description_no: sectionsNo[1]?.videos?.[1]?.description || sections[1]?.videos?.[1]?.description || '',
+        sections: sections.map((section: any, idx: number) => ({
+          title_en: section.title || '',
+          title_no: sectionsNo[idx]?.title || section.title || '',
+          description_en: section.description || '',
+          description_no: sectionsNo[idx]?.description || section.description || '',
+          videos: (section.videos || []).map((video: any, vidIdx: number) => ({
+            title_en: video.title || '',
+            title_no: sectionsNo[idx]?.videos?.[vidIdx]?.title || video.title || '',
+            description_en: video.description || '',
+            description_no: sectionsNo[idx]?.videos?.[vidIdx]?.description || video.description || '',
+            url: video.url || '',
+          })),
+        })),
       })
     }
   }
@@ -401,79 +383,27 @@ export default function AdminEditPagePage() {
         },
       }
     } else if (pageKey === 'how-to-use') {
+      const sections = (formData.sections || []).map((section: any) => ({
+        title: section.title_en || '',
+        description: section.description_en || '',
+        videos: (section.videos || []).map((video: any) => ({
+          title: video.title_en || '',
+          description: video.description_en || '',
+          url: video.url || '',
+        })),
+      }))
+      const sectionsNo = (formData.sections || []).map((section: any) => ({
+        title: section.title_no || section.title_en || '',
+        description: section.description_no || section.description_en || '',
+        videos: (section.videos || []).map((video: any) => ({
+          title: video.title_no || video.title_en || '',
+          description: video.description_no || video.description_en || '',
+          url: video.url || '',
+        })),
+      }))
       return {
-        en: {
-          sections: [
-            {
-              title: formData.section1Title_en || '',
-              description: formData.section1Description_en || '',
-              videos: [
-                {
-                  title: formData.section1Video1Title_en || '',
-                  description: formData.section1Video1Description_en || '',
-                  url: formData.section1Video1Url || '',
-                },
-                {
-                  title: formData.section1Video2Title_en || '',
-                  description: formData.section1Video2Description_en || '',
-                  url: formData.section1Video2Url || '',
-                },
-              ],
-            },
-            {
-              title: formData.section2Title_en || '',
-              description: formData.section2Description_en || '',
-              videos: [
-                {
-                  title: formData.section2Video1Title_en || '',
-                  description: formData.section2Video1Description_en || '',
-                  url: formData.section2Video1Url || '',
-                },
-                {
-                  title: formData.section2Video2Title_en || '',
-                  description: formData.section2Video2Description_en || '',
-                  url: formData.section2Video2Url || '',
-                },
-              ],
-            },
-          ],
-        },
-        no: {
-          sections: [
-            {
-              title: formData.section1Title_no || formData.section1Title_en || '',
-              description: formData.section1Description_no || formData.section1Description_en || '',
-              videos: [
-                {
-                  title: formData.section1Video1Title_no || formData.section1Video1Title_en || '',
-                  description: formData.section1Video1Description_no || formData.section1Video1Description_en || '',
-                  url: formData.section1Video1Url || '',
-                },
-                {
-                  title: formData.section1Video2Title_no || formData.section1Video2Title_en || '',
-                  description: formData.section1Video2Description_no || formData.section1Video2Description_en || '',
-                  url: formData.section1Video2Url || '',
-                },
-              ],
-            },
-            {
-              title: formData.section2Title_no || formData.section2Title_en || '',
-              description: formData.section2Description_no || formData.section2Description_en || '',
-              videos: [
-                {
-                  title: formData.section2Video1Title_no || formData.section2Video1Title_en || '',
-                  description: formData.section2Video1Description_no || formData.section2Video1Description_en || '',
-                  url: formData.section2Video1Url || '',
-                },
-                {
-                  title: formData.section2Video2Title_no || formData.section2Video2Title_en || '',
-                  description: formData.section2Video2Description_no || formData.section2Video2Description_en || '',
-                  url: formData.section2Video2Url || '',
-                },
-              ],
-            },
-          ],
-        },
+        en: { sections },
+        no: { sections: sectionsNo },
       }
     }
     return { en: {}, no: {} }
@@ -605,44 +535,31 @@ export default function AdminEditPagePage() {
           updates.websiteLabel_no = await translateText(formData.websiteLabel_en)
         }
       } else if (pageKey === 'how-to-use') {
-        // Section 1
-        if (formData.section1Title_en) {
-          updates.section1Title_no = await translateText(formData.section1Title_en)
-        }
-        if (formData.section1Description_en) {
-          updates.section1Description_no = await translateText(formData.section1Description_en)
-        }
-        if (formData.section1Video1Title_en) {
-          updates.section1Video1Title_no = await translateText(formData.section1Video1Title_en)
-        }
-        if (formData.section1Video1Description_en) {
-          updates.section1Video1Description_no = await translateText(formData.section1Video1Description_en)
-        }
-        if (formData.section1Video2Title_en) {
-          updates.section1Video2Title_no = await translateText(formData.section1Video2Title_en)
-        }
-        if (formData.section1Video2Description_en) {
-          updates.section1Video2Description_no = await translateText(formData.section1Video2Description_en)
-        }
-        // Section 2
-        if (formData.section2Title_en) {
-          updates.section2Title_no = await translateText(formData.section2Title_en)
-        }
-        if (formData.section2Description_en) {
-          updates.section2Description_no = await translateText(formData.section2Description_en)
-        }
-        if (formData.section2Video1Title_en) {
-          updates.section2Video1Title_no = await translateText(formData.section2Video1Title_en)
-        }
-        if (formData.section2Video1Description_en) {
-          updates.section2Video1Description_no = await translateText(formData.section2Video1Description_en)
-        }
-        if (formData.section2Video2Title_en) {
-          updates.section2Video2Title_no = await translateText(formData.section2Video2Title_en)
-        }
-        if (formData.section2Video2Description_en) {
-          updates.section2Video2Description_no = await translateText(formData.section2Video2Description_en)
-        }
+        // Translate all sections dynamically
+        const sections = formData.sections || []
+        const updatedSections = await Promise.all(sections.map(async (section: any) => {
+          const updatedSection = { ...section }
+          if (section.title_en) {
+            updatedSection.title_no = await translateText(section.title_en)
+          }
+          if (section.description_en) {
+            updatedSection.description_no = await translateText(section.description_en)
+          }
+          if (section.videos) {
+            updatedSection.videos = await Promise.all(section.videos.map(async (video: any) => {
+              const updatedVideo = { ...video }
+              if (video.title_en) {
+                updatedVideo.title_no = await translateText(video.title_en)
+              }
+              if (video.description_en) {
+                updatedVideo.description_no = await translateText(video.description_en)
+              }
+              return updatedVideo
+            }))
+          }
+          return updatedSection
+        }))
+        updates.sections = updatedSections
       }
 
       // Update form data with translations
@@ -1067,101 +984,182 @@ export default function AdminEditPagePage() {
     </div>
   )
 
-  const renderHowToUseForm = () => (
-    <div className="space-y-6">
-      {[1, 2].map((sectionNum) => (
-        <div key={sectionNum} className="bg-gray-50 p-4 rounded-lg">
-          <h3 className="font-semibold text-gray-900 mb-4">Section {sectionNum}</h3>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Section Title</label>
-              <input
-                type="text"
-                value={activeLanguage === 'en' 
-                  ? (formData[`section${sectionNum}Title_en` as keyof typeof formData] || '') 
-                  : (formData[`section${sectionNum}Title_no` as keyof typeof formData] || '')}
-                onChange={(e) => {
-                  const key = activeLanguage === 'en' 
-                    ? `section${sectionNum}Title_en` 
-                    : `section${sectionNum}Title_no`
-                  setFormData({ ...formData, [key]: e.target.value })
-                }}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-nature-green-500 focus:border-nature-green-500 text-sm"
-              />
+  const renderHowToUseForm = () => {
+    const sections = formData.sections || []
+    
+    const addSection = () => {
+      setFormData({
+        ...formData,
+        sections: [
+          ...sections,
+          {
+            title_en: '',
+            title_no: '',
+            description_en: '',
+            description_no: '',
+            videos: [],
+          },
+        ],
+      })
+    }
+
+    const removeSection = (index: number) => {
+      setFormData({
+        ...formData,
+        sections: sections.filter((_: any, i: number) => i !== index),
+      })
+    }
+
+    const addVideo = (sectionIndex: number) => {
+      const updatedSections = [...sections]
+      if (!updatedSections[sectionIndex].videos) {
+        updatedSections[sectionIndex].videos = []
+      }
+      updatedSections[sectionIndex].videos.push({
+        title_en: '',
+        title_no: '',
+        description_en: '',
+        description_no: '',
+        url: '',
+      })
+      setFormData({ ...formData, sections: updatedSections })
+    }
+
+    const removeVideo = (sectionIndex: number, videoIndex: number) => {
+      const updatedSections = [...sections]
+      updatedSections[sectionIndex].videos = updatedSections[sectionIndex].videos.filter(
+        (_: any, i: number) => i !== videoIndex
+      )
+      setFormData({ ...formData, sections: updatedSections })
+    }
+
+    const updateSection = (index: number, field: string, value: any) => {
+      const updatedSections = [...sections]
+      updatedSections[index] = { ...updatedSections[index], [field]: value }
+      setFormData({ ...formData, sections: updatedSections })
+    }
+
+    const updateVideo = (sectionIndex: number, videoIndex: number, field: string, value: any) => {
+      const updatedSections = [...sections]
+      updatedSections[sectionIndex].videos[videoIndex] = {
+        ...updatedSections[sectionIndex].videos[videoIndex],
+        [field]: value,
+      }
+      setFormData({ ...formData, sections: updatedSections })
+    }
+
+    return (
+      <div className="space-y-6">
+        {sections.map((section: any, sectionIndex: number) => (
+          <div key={sectionIndex} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-gray-900">Section {sectionIndex + 1}</h3>
+              <button
+                type="button"
+                onClick={() => removeSection(sectionIndex)}
+                className="text-red-600 hover:text-red-700 text-sm font-medium flex items-center gap-1"
+              >
+                <Trash2 className="w-4 h-4" />
+                Remove Section
+              </button>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Section Description</label>
-              <textarea
-                value={activeLanguage === 'en' 
-                  ? (formData[`section${sectionNum}Description_en` as keyof typeof formData] || '') 
-                  : (formData[`section${sectionNum}Description_no` as keyof typeof formData] || '')}
-                onChange={(e) => {
-                  const key = activeLanguage === 'en' 
-                    ? `section${sectionNum}Description_en` 
-                    : `section${sectionNum}Description_no`
-                  setFormData({ ...formData, [key]: e.target.value })
-                }}
-                rows={2}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-nature-green-500 focus:border-nature-green-500 text-sm resize-none"
-              />
-            </div>
-            {[1, 2].map((videoNum) => (
-              <div key={videoNum} className="border border-gray-200 p-4 rounded-lg">
-                <h4 className="font-medium text-gray-900 mb-3">Video {videoNum}</h4>
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Video Title</label>
-                    <input
-                      type="text"
-                      value={activeLanguage === 'en' 
-                        ? (formData[`section${sectionNum}Video${videoNum}Title_en` as keyof typeof formData] || '') 
-                        : (formData[`section${sectionNum}Video${videoNum}Title_no` as keyof typeof formData] || '')}
-                      onChange={(e) => {
-                        const key = activeLanguage === 'en' 
-                          ? `section${sectionNum}Video${videoNum}Title_en` 
-                          : `section${sectionNum}Video${videoNum}Title_no`
-                        setFormData({ ...formData, [key]: e.target.value })
-                      }}
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-nature-green-500 focus:border-nature-green-500 text-sm"
-                    />
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Section Title</label>
+                <input
+                  type="text"
+                  value={activeLanguage === 'en' ? (section.title_en || '') : (section.title_no || '')}
+                  onChange={(e) => {
+                    const field = activeLanguage === 'en' ? 'title_en' : 'title_no'
+                    updateSection(sectionIndex, field, e.target.value)
+                  }}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-nature-green-500 focus:border-nature-green-500 text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Section Description</label>
+                <textarea
+                  value={activeLanguage === 'en' ? (section.description_en || '') : (section.description_no || '')}
+                  onChange={(e) => {
+                    const field = activeLanguage === 'en' ? 'description_en' : 'description_no'
+                    updateSection(sectionIndex, field, e.target.value)
+                  }}
+                  rows={2}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-nature-green-500 focus:border-nature-green-500 text-sm resize-none"
+                />
+              </div>
+              {(section.videos || []).map((video: any, videoIndex: number) => (
+                <div key={videoIndex} className="border border-gray-200 p-4 rounded-lg bg-white">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-medium text-gray-900">Video {videoIndex + 1}</h4>
+                    <button
+                      type="button"
+                      onClick={() => removeVideo(sectionIndex, videoIndex)}
+                      className="text-red-600 hover:text-red-700 text-xs font-medium"
+                    >
+                      Remove
+                    </button>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Video Description</label>
-                    <textarea
-                      value={activeLanguage === 'en' 
-                        ? (formData[`section${sectionNum}Video${videoNum}Description_en` as keyof typeof formData] || '') 
-                        : (formData[`section${sectionNum}Video${videoNum}Description_no` as keyof typeof formData] || '')}
-                      onChange={(e) => {
-                        const key = activeLanguage === 'en' 
-                          ? `section${sectionNum}Video${videoNum}Description_en` 
-                          : `section${sectionNum}Video${videoNum}Description_no`
-                        setFormData({ ...formData, [key]: e.target.value })
-                      }}
-                      rows={2}
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-nature-green-500 focus:border-nature-green-500 text-sm resize-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Video URL</label>
-                    <input
-                      type="url"
-                      value={formData[`section${sectionNum}Video${videoNum}Url` as keyof typeof formData] || ''}
-                      onChange={(e) => {
-                        const key = `section${sectionNum}Video${videoNum}Url` as keyof typeof formData
-                        setFormData({ ...formData, [key]: e.target.value })
-                      }}
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-nature-green-500 focus:border-nature-green-500 text-sm"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">Video URL is the same for all languages</p>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Video Title</label>
+                      <input
+                        type="text"
+                        value={activeLanguage === 'en' ? (video.title_en || '') : (video.title_no || '')}
+                        onChange={(e) => {
+                          const field = activeLanguage === 'en' ? 'title_en' : 'title_no'
+                          updateVideo(sectionIndex, videoIndex, field, e.target.value)
+                        }}
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-nature-green-500 focus:border-nature-green-500 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Video Description</label>
+                      <textarea
+                        value={activeLanguage === 'en' ? (video.description_en || '') : (video.description_no || '')}
+                        onChange={(e) => {
+                          const field = activeLanguage === 'en' ? 'description_en' : 'description_no'
+                          updateVideo(sectionIndex, videoIndex, field, e.target.value)
+                        }}
+                        rows={2}
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-nature-green-500 focus:border-nature-green-500 text-sm resize-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Video URL</label>
+                      <input
+                        type="url"
+                        value={video.url || ''}
+                        onChange={(e) => updateVideo(sectionIndex, videoIndex, 'url', e.target.value)}
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-nature-green-500 focus:border-nature-green-500 text-sm"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Video URL is the same for all languages</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+              <button
+                type="button"
+                onClick={() => addVideo(sectionIndex)}
+                className="w-full px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-nature-green-500 hover:text-nature-green-600 transition-colors text-sm font-medium flex items-center justify-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Add Video
+              </button>
+            </div>
           </div>
-        </div>
-      ))}
-    </div>
-  )
+        ))}
+        <button
+          type="button"
+          onClick={addSection}
+          className="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-nature-green-500 hover:text-nature-green-600 transition-colors text-sm font-medium flex items-center justify-center gap-2 bg-white"
+        >
+          <Plus className="w-5 h-5" />
+          Add Section
+        </button>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
@@ -1271,7 +1269,7 @@ export default function AdminEditPagePage() {
                   {t.forms.norwegian || 'Norwegian'}
                 </button>
               </div>
-              {activeLanguage === 'no' && (formData.title_en || formData.subtitle_en || (pageKey === 'about' && formData.overviewTitle_en) || (pageKey === 'contact' && formData.companyName_en) || (pageKey === 'how-to-use' && formData.section1Title_en)) && (
+              {activeLanguage === 'no' && (formData.title_en || formData.subtitle_en || (pageKey === 'about' && formData.overviewTitle_en) || (pageKey === 'contact' && formData.companyName_en) || (pageKey === 'how-to-use' && (formData.sections || []).length > 0)) && (
                 <button
                   type="button"
                   onClick={handleTranslateToNO}

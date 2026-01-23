@@ -26,23 +26,14 @@ export const useCartStore = create<CartStore>()(
     (set, get) => ({
       items: [],
       addItem: (product, quantity = 1) => {
-        // Check stock before adding
-        if ((product.stock || 0) <= 0) {
-          return // Don't add if out of stock
-        }
-
         const items = get().items
-        const existingItem = items.find((item) => item.id === product.id)
+        const existingItem = items.find((item) => String(item.id) === String(product.id))
 
         if (existingItem) {
           const newQuantity = existingItem.quantity + quantity
-          // Check if total quantity exceeds stock
-          if (newQuantity > (product.stock || 0)) {
-            return // Don't add if exceeds stock
-          }
           set({
             items: items.map((item) =>
-              item.id === product.id
+              String(item.id) === String(product.id)
                 ? { ...item, quantity: newQuantity }
                 : item
             ),
@@ -54,26 +45,30 @@ export const useCartStore = create<CartStore>()(
         }
       },
       removeItem: (productId) => {
-        set({
-          items: get().items.filter((item) => item.id !== productId),
-        })
+        const currentItems = get().items
+        const filteredItems = currentItems.filter((item) => String(item.id) !== String(productId))
+        set({ items: filteredItems })
       },
       updateQuantity: (productId, quantity) => {
+        // Allow any quantity > 0 - no stock restrictions
         if (quantity <= 0) {
           get().removeItem(productId)
-        } else {
-          const items = get().items
-          const item = items.find((item) => item.id === productId)
-          // Check if quantity exceeds stock
-          if (item && quantity > (item.stock || 0)) {
-            return // Don't update if exceeds stock
-          }
-          set({
-            items: items.map((item) =>
-              item.id === productId ? { ...item, quantity } : item
-            ),
-          })
+          return
         }
+        
+        const items = get().items
+        const itemIndex = items.findIndex((item) => String(item.id) === String(productId))
+        
+        if (itemIndex === -1) {
+          console.warn('[Cart Store] Item not found for updateQuantity:', { productId, quantity, items })
+          return
+        }
+        
+        // Create new array with updated item - no stock validation
+        const newItems = [...items]
+        newItems[itemIndex] = { ...newItems[itemIndex], quantity }
+        
+        set({ items: newItems })
       },
       clearCart: () => {
         set({ items: [] })

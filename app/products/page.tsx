@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Product, Category } from '@/types/database'
 import { useGlobalLoader } from '@/components/GlobalLoader'
 import { Image as ImageIcon, Search, ArrowRight } from 'lucide-react'
+import ProductImage from '@/components/ProductImage'
 import { getCategoryEmoji } from '@/lib/categoryIcons'
 import { useLanguageStore } from '@/store/languageStore'
 import { getTranslation } from '@/lib/translations'
@@ -76,61 +77,108 @@ export default function ProductsPage() {
             filteredByAssignment = []
           } else {
             const result = await response.json()
+            console.log('[Product Filter] API returned assigned product IDs:', result.assignedProductIds)
             const productsWithAssignments = new Set(result.assignedProductIds || [])
             
-            // Get current user's assigned products
+            // Get current user's assigned products via API (handles RLS properly)
+            // IMPORTANT: Always fetch, even if not logged in (API returns empty array for non-logged-in users)
             let userAssignedProducts = new Set<string>()
-            if (currentUser) {
-              try {
-                const { data: userAssignments, error: assignmentError } = await supabase
-                  .from('product_user_assignments')
-                  .select('product_id')
-                  .eq('user_id', currentUser.id)
-                
-                if (assignmentError) {
-                  console.error('Error fetching user assignments:', assignmentError)
-                  // If we can't fetch assignments, hide all products with assignments for safety
-                  userAssignedProducts = new Set<string>()
-                } else if (userAssignments && Array.isArray(userAssignments)) {
-                  // Ensure we convert to strings to match product.id format
-                  userAssignedProducts = new Set(userAssignments.map((a: any) => String(a.product_id)))
-                }
-              } catch (err) {
-                console.error('Exception fetching user assignments:', err)
-                // On error, hide all products with assignments for safety
+            try {
+              const assignmentsResponse = await fetch('/api/products/user-assignments', {
+                cache: 'no-store',
+              })
+              if (assignmentsResponse.ok) {
+                const assignmentsData = await assignmentsResponse.json()
+                userAssignedProducts = new Set<string>((assignmentsData.assignedProductIds || []).map((id: any) => String(id)))
+              } else {
+                console.error('Failed to fetch user assignments')
+                // If we can't fetch assignments, hide all products with assignments for safety
                 userAssignedProducts = new Set<string>()
               }
+            } catch (err) {
+              console.error('Exception fetching user assignments:', err)
+              // On error, hide all products with assignments for safety
+              userAssignedProducts = new Set<string>()
             }
             
-            // Ensure product IDs are strings for comparison
+            // Ensure product IDs are strings for comparison (trim to handle any whitespace)
             const productsWithAssignmentsStr = new Set<string>(
-              Array.from(productsWithAssignments).map(id => String(id))
+              Array.from(productsWithAssignments).map(id => String(id).trim().toLowerCase())
             )
             
-            // Filter products
+            // Also normalize user assigned products
+            const userAssignedProductsNormalized = new Set<string>(
+              Array.from(userAssignedProducts).map(id => String(id).trim().toLowerCase())
+            )
+            
+            // Debug: Log what we're comparing
+            const allProductIds = (productsData || []).map((p: any) => String(p.id).trim().toLowerCase())
+            console.log('[Product Filter] Debug Info:', {
+              productsWithAssignments: Array.from(productsWithAssignmentsStr),
+              userAssignedProducts: Array.from(userAssignedProductsNormalized),
+              currentUser: currentUser ? { id: currentUser.id, email: currentUser.email } : null,
+              totalProducts: productsData?.length || 0,
+              allProductIds: allProductIds,
+              matchingProducts: allProductIds.filter(id => productsWithAssignmentsStr.has(id))
+            })
+            
+            // Filter products - CRITICAL: Products with assignments should ONLY be visible to assigned users
+            let filteredCount = 0
             filteredByAssignment = (productsData || []).filter((product: any) => {
-              const productIdStr = String(product.id)
+              // Normalize product ID for comparison
+              const productIdStr = String(product.id).trim().toLowerCase()
               
-              // If this product has assignments
-              if (productsWithAssignmentsStr.has(productIdStr)) {
-                // Only show if user is logged in AND assigned to this product
-                // Admins are handled above, so we know this is not an admin
+              // Check if this product has ANY assignments
+              const hasAssignments = productsWithAssignmentsStr.has(productIdStr)
+              
+              if (hasAssignments) {
+                // Product HAS assignments - only show if user is assigned
                 if (currentUser) {
-                  const isAssigned = userAssignedProducts.has(productIdStr)
-                  // Only return true if user is explicitly assigned
-                  return isAssigned
+                  // User is logged in - check if they're assigned
+                  const isAssigned = userAssignedProductsNormalized.has(productIdStr)
+                  if (!isAssigned) {
+                    // User is NOT assigned - HIDE this product
+                    console.log(`[Product Filter] ❌ HIDING product ${productIdStr} (${product.name}) - user ${currentUser.email} is NOT assigned`)
+                    filteredCount++
+                    return false
+                  }
+                  // User IS assigned - SHOW this product
+                  console.log(`[Product Filter] ✅ SHOWING product ${productIdStr} (${product.name}) - user ${currentUser.email} IS assigned`)
+                  return true
+                } else {
+                  // User is NOT logged in - HIDE products with assignments
+                  console.log(`[Product Filter] ❌ HIDING product ${productIdStr} (${product.name}) - user not logged in`)
+                  filteredCount++
+                  return false
                 }
-                // Not logged in and product has assignments = hide it
-                return false
+              } else {
+                // Product has NO assignments - show to everyone
+                return true
               }
-              // Product has no assignments = show to everyone
-              return true
+            })
+            
+            console.log(`[Product Filter] Summary: Filtered out ${filteredCount} products with assignments`)
+            
+            console.log('[Product Filter] Result:', {
+              beforeFilter: productsData?.length || 0,
+              afterFilter: filteredByAssignment.length,
+              filteredOut: (productsData?.length || 0) - filteredByAssignment.length
+            })
+            
+            // Debug logging
+            console.log('[Product Filter] Filtering summary:', {
+              totalProducts: productsData?.length || 0,
+              productsWithAssignments: Array.from(productsWithAssignmentsStr),
+              userAssignedProducts: Array.from(userAssignedProducts),
+              currentUserId: currentUser?.id || 'not logged in',
+              filteredCount: filteredByAssignment.length
             })
           }
         } catch (error) {
           console.error('Error filtering products by assignments:', error)
-          // If error occurs, show all products (fallback)
-          filteredByAssignment = productsData || []
+          // If error occurs, hide all products with assignments for safety
+          // Better to be restrictive than show restricted products
+          filteredByAssignment = []
         }
       }
 
@@ -332,25 +380,20 @@ export default function ProductsPage() {
               const emoji = getCategoryEmoji(categoryName || '', product.category_data?.icon)
               const productName = getTranslation(product.name_translations, language)
               const productDescription = getTranslation(product.description_translations, language)
+              
               return (
                 <Link
                   key={product.id}
                   href={`/products/${product.id}`}
+                  onClick={() => showLoader(t.loader.loading)}
                   className="group bg-white rounded-lg shadow-sm hover:shadow-md transition-all overflow-hidden border border-gray-200 hover:border-nature-green-200"
                 >
                   <div className="h-64 bg-gray-50 flex items-center justify-center overflow-hidden relative p-4">
-                    {product.image_url ? (
-                      <img
-                        src={product.image_url}
-                        alt={productName}
-                        className="w-full h-full object-contain transition-transform duration-200 group-hover:scale-105"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                        <ImageIcon className="w-16 h-16 text-gray-300" />
-                      </div>
-                    )}
+                    <ProductImage
+                      imageUrl={product.image_url}
+                      className="w-full h-full object-contain transition-transform duration-200 group-hover:scale-105"
+                      containerClassName="w-full h-full bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center relative overflow-hidden"
+                    />
                     {categoryName && (
                       <span className="absolute top-3 left-3 bg-nature-green-600 text-white px-2.5 py-1 rounded text-xs font-medium flex items-center gap-1.5 shadow-sm whitespace-nowrap">
                         {emoji && <span>{emoji}</span>}
@@ -377,9 +420,11 @@ export default function ProductsPage() {
                       <span className={`inline-block px-2.5 py-1 rounded text-xs font-medium ${
                         (product.stock || 0) > 0
                           ? 'bg-green-100 text-green-800'
-                          : 'bg-red-100 text-red-800'
+                          : 'bg-blue-100 text-blue-800'
                       }`}>
-                        {t.products.stock || 'Stock'}: {(product.stock || 0) > 0 ? product.stock : t.products.outOfStock || 'Out of Stock'}
+                        {(product.stock || 0) > 0 
+                          ? `${t.products.stock || 'Stock'}: ${product.stock}`
+                          : t.products.comingSoon || 'Coming Soon'}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">

@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Product, Category } from '@/types/database'
 import { Image as ImageIcon, Search, Package } from 'lucide-react'
+import ProductImage from '@/components/ProductImage'
 import { useTranslations } from '@/hooks/useTranslations'
 import { useLanguageStore } from '@/store/languageStore'
 import { getTranslation } from '@/lib/translations'
@@ -223,17 +224,15 @@ export default function AdminProductsPage() {
                         className="hover:bg-gray-50 transition-colors"
                       >
                         <td className="py-3 px-4">
-                          <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
-                            {product.image_url ? (
-                              <img
-                                src={product.image_url}
-                                alt={getTranslation(product.name_translations, language)}
-                                className="w-full h-full object-contain"
-                                loading="lazy"
-                              />
-                            ) : (
-                              <ImageIcon className="w-6 h-6 text-gray-400" />
-                            )}
+                          <div className="w-20 h-20 rounded-lg overflow-hidden relative">
+                            <ProductImage
+                              imageUrl={product.image_url}
+                              className="w-full h-full object-contain"
+                              containerClassName="w-full h-full bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center relative overflow-hidden"
+                              iconSize="small"
+                              showText={true}
+                              placeholderText="No Image"
+                            />
                           </div>
                         </td>
                         <td className="py-3 px-4">

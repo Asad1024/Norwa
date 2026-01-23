@@ -8,6 +8,11 @@
   --background-end-rgb: 240, 253, 244;
 }
 
+/* Prevent flash of wrong language content during hydration */
+html.hydrating body {
+  visibility: hidden;
+}
+
 body {
   color: rgb(var(--foreground-rgb));
   background: linear-gradient(

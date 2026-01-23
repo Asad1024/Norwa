@@ -48,15 +48,7 @@ export default function PendingCartHandler() {
             return
           }
 
-          // Check stock
-          if ((product.stock || 0) <= 0) {
-            const productName = getTranslation(product.name_translations, language)
-            showToast(t.productDetail.outOfStock || `${productName} is out of stock`, 'error')
-            sessionStorage.removeItem('addToCartAfterLogin')
-            return
-          }
-
-          // Add to cart
+          // Add to cart (no stock validation - allow adding even if stock is 0)
           const productName = getTranslation(product.name_translations, language)
           addItem(
             {
@@ -75,14 +67,7 @@ export default function PendingCartHandler() {
           // New format - we have full product data
           const { id, name, description, price, stock, image_url, quantity } = productData
           
-          // Check stock
-          if ((stock || 0) <= 0) {
-            showToast(t.productDetail.outOfStock || `${name} is out of stock`, 'error')
-            sessionStorage.removeItem('addToCartAfterLogin')
-            return
-          }
-
-          // Add to cart
+          // Add to cart (no stock validation - allow adding even if stock is 0)
           addItem(
             {
               id,

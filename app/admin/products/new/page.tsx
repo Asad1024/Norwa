@@ -24,7 +24,9 @@ export default function NewProductPage() {
   const [categories, setCategories] = useState<Category[]>([])
   const [error, setError] = useState('')
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [selectedTechnicalFile, setSelectedTechnicalFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [technicalFileName, setTechnicalFileName] = useState<string>('')
   const [activeLanguage, setActiveLanguage] = useState<'en' | 'no'>('en')
   const [formData, setFormData] = useState({
     name_en: '',
@@ -34,7 +36,6 @@ export default function NewProductPage() {
     category_id: '',
     price: '',
     stock: '0',
-    image_url: '',
   })
 
   useEffect(() => {
@@ -122,14 +123,69 @@ export default function NewProductPage() {
         setImagePreview(reader.result as string)
       }
       reader.readAsDataURL(file)
-      // Clear URL input when file is selected
-      setFormData({ ...formData, image_url: '' })
+      // File selected
     }
   }
 
   const handleRemoveImage = () => {
     setSelectedFile(null)
     setImagePreview(null)
+  }
+
+  const handleTechnicalFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      // Validate file type
+      const allowedExtensions = ['.pdf', '.doc', '.docx', '.txt']
+      const fileExt = file.name.split('.').pop()?.toLowerCase()
+      if (!fileExt || !allowedExtensions.includes(`.${fileExt}`)) {
+        setError('Please select a PDF, DOC, DOCX, or TXT file')
+        return
+      }
+      // Validate file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        setError('File size must be less than 10MB')
+        return
+      }
+      setSelectedTechnicalFile(file)
+      setTechnicalFileName(file.name)
+      setError('')
+      // Technical file selected
+    }
+  }
+
+  const handleRemoveTechnicalFile = () => {
+    setSelectedTechnicalFile(null)
+    setTechnicalFileName('')
+  }
+
+  const uploadTechnicalData = async (file: File): Promise<string> => {
+    // Get auth token
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) {
+      throw new Error('Not authenticated')
+    }
+
+    // Upload via API route
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const response = await fetch('/api/admin/upload-technical-data', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+      body: formData,
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Upload failed')
+    }
+
+    const { url, fileName } = await response.json()
+    setTechnicalFileName(fileName)
+    return url
   }
 
   const uploadImage = async (file: File): Promise<string> => {
@@ -174,7 +230,8 @@ export default function NewProductPage() {
         throw new Error('Unauthorized')
       }
 
-      let imageUrl = formData.image_url
+      let imageUrl: string | null = null
+      let technicalDataUrl: string | null = null
 
       // Upload image if file is selected
       if (selectedFile) {
@@ -183,8 +240,6 @@ export default function NewProductPage() {
         try {
           imageUrl = await uploadImage(selectedFile)
           console.log('Image uploaded, URL:', imageUrl)
-          // Update formData with the new image URL
-          setFormData({ ...formData, image_url: imageUrl })
           setImagePreview(imageUrl)
           showToast('Image uploaded successfully!', 'success')
           hideLoader()
@@ -192,6 +247,24 @@ export default function NewProductPage() {
           hideLoader()
           showToast(`Image upload failed: ${uploadError.message}`, 'error')
           throw new Error(`Image upload failed: ${uploadError.message}`)
+        } finally {
+          setUploading(false)
+        }
+      }
+
+      // Upload technical data file if selected
+      if (selectedTechnicalFile) {
+        setUploading(true)
+        showLoader(t.loader.loading)
+        try {
+          technicalDataUrl = await uploadTechnicalData(selectedTechnicalFile)
+          console.log('Technical data uploaded, URL:', technicalDataUrl)
+          showToast('Technical data file uploaded successfully!', 'success')
+          hideLoader()
+        } catch (uploadError: any) {
+          hideLoader()
+          showToast(`Technical data upload failed: ${uploadError.message}`, 'error')
+          throw new Error(`Technical data upload failed: ${uploadError.message}`)
         } finally {
           setUploading(false)
         }
@@ -219,6 +292,7 @@ export default function NewProductPage() {
         price: parseFloat(formData.price),
         stock: parseInt(formData.stock) || 0,
         image_url: imageUrl || null,
+        technical_data_url: technicalDataUrl || null,
       }).select()
 
       if (error) {
@@ -468,34 +542,6 @@ export default function NewProductPage() {
                   {t.forms.uploadImage}
                 </p>
               </div>
-
-              {/* URL Input (fallback) */}
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-200"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">{t.forms.or}</span>
-                </div>
-              </div>
-
-              <input
-                id="image_url"
-                type="url"
-                value={formData.image_url}
-                onChange={(e) => {
-                  setFormData({ ...formData, image_url: e.target.value })
-                  if (e.target.value) {
-                    setSelectedFile(null)
-                    setImagePreview(null)
-                  }
-                }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent mt-3 text-sm"
-                placeholder="https://example.com/image.jpg"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                {t.forms.imageUrl}
-              </p>
             </div>
 
             <div className="flex space-x-3 pt-4">

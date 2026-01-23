@@ -9,6 +9,7 @@ import { useTranslations } from '@/hooks/useTranslations'
 import { useLanguageStore } from '@/store/languageStore'
 import { getTranslation } from '@/lib/translations'
 import { useGlobalLoader } from '@/components/GlobalLoader'
+import ProductImage from '@/components/ProductImage'
 
 export default function OrdersPage() {
   const router = useRouter()
@@ -117,16 +118,15 @@ export default function OrdersPage() {
                         className="flex items-center justify-between py-2 bg-gray-50 rounded-lg px-3"
                       >
                         <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 bg-gray-100 rounded flex items-center justify-center flex-shrink-0 border border-gray-200">
-                            {item.products?.image_url ? (
-                              <img
-                                src={item.products.image_url}
-                                alt={productName}
-                                className="w-full h-full object-cover rounded"
-                              />
-                            ) : (
-                              <span className="text-lg">🌿</span>
-                            )}
+                          <div className="w-10 h-10 rounded flex items-center justify-center flex-shrink-0 border border-gray-200 overflow-hidden">
+                            <ProductImage
+                              imageUrl={item.products?.image_url}
+                              alt={productName}
+                              className="w-full h-full object-cover"
+                              containerClassName="w-full h-full flex items-center justify-center pointer-events-none"
+                              iconSize="small"
+                              showText={false}
+                            />
                           </div>
                           <div>
                             <p className="font-medium text-gray-900 text-sm">

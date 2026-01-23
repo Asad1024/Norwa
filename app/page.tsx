@@ -6,9 +6,11 @@ import { createClient } from '@/lib/supabase/client'
 import { useEffect, useState } from 'react'
 import { Product, Category } from '@/types/database'
 import { Image as ImageIcon, Package, ArrowRight, Droplets, Heart, Mountain, Sparkles, TrendingDown, Leaf } from 'lucide-react'
+import ProductImage from '@/components/ProductImage'
 import { useLanguageStore } from '@/store/languageStore'
 import { getTranslation } from '@/lib/translations'
 import { useTranslations } from '@/hooks/useTranslations'
+import { useGlobalLoader } from '@/components/GlobalLoader'
 
 export default function Home() {
   const [products, setProducts] = useState<(Product & { category_data?: Category })[]>([])
@@ -16,6 +18,7 @@ export default function Home() {
   const supabase = createClient()
   const language = useLanguageStore((state) => state.language)
   const t = useTranslations()
+  const { showLoader } = useGlobalLoader()
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -57,59 +60,78 @@ export default function Home() {
             const result = await response.json()
             const productsWithAssignments = new Set(result.assignedProductIds || [])
             
-            // Get current user's assigned products
+            // Get current user's assigned products via API (handles RLS properly)
+            // IMPORTANT: Always fetch, even if not logged in (API returns empty array for non-logged-in users)
             let userAssignedProducts = new Set<string>()
-            if (currentUser) {
-              try {
-                const { data: userAssignments, error: assignmentError } = await supabase
-                  .from('product_user_assignments')
-                  .select('product_id')
-                  .eq('user_id', currentUser.id)
-                
-                if (assignmentError) {
-                  console.error('Error fetching user assignments:', assignmentError)
-                  // If we can't fetch assignments, hide all products with assignments for safety
-                  userAssignedProducts = new Set<string>()
-                } else if (userAssignments && Array.isArray(userAssignments)) {
-                  // Ensure we convert to strings to match product.id format
-                  userAssignedProducts = new Set(userAssignments.map((a: any) => String(a.product_id)))
-                }
-              } catch (err) {
-                console.error('Exception fetching user assignments:', err)
-                // On error, hide all products with assignments for safety
+            try {
+              const assignmentsResponse = await fetch('/api/products/user-assignments', {
+                cache: 'no-store',
+              })
+              if (assignmentsResponse.ok) {
+                const assignmentsData = await assignmentsResponse.json()
+                userAssignedProducts = new Set<string>((assignmentsData.assignedProductIds || []).map((id: any) => String(id)))
+              } else {
+                console.error('Failed to fetch user assignments')
+                // If we can't fetch assignments, hide all products with assignments for safety
                 userAssignedProducts = new Set<string>()
               }
+            } catch (err) {
+              console.error('Exception fetching user assignments:', err)
+              // On error, hide all products with assignments for safety
+              userAssignedProducts = new Set<string>()
             }
             
-            // Ensure product IDs are strings for comparison
+            // Ensure product IDs are strings for comparison (trim and lowercase for consistent comparison)
             const productsWithAssignmentsStr = new Set<string>(
-              Array.from(productsWithAssignments).map(id => String(id))
+              Array.from(productsWithAssignments).map(id => String(id).trim().toLowerCase())
             )
             
-            // Filter products
+            // Also normalize user assigned products
+            const userAssignedProductsNormalized = new Set<string>(
+              Array.from(userAssignedProducts).map(id => String(id).trim().toLowerCase())
+            )
+            
+            // Filter products - CRITICAL: Products with assignments should ONLY be visible to assigned users
+            let filteredCount = 0
             filteredProducts = (productsData || []).filter((product: any) => {
-              const productIdStr = String(product.id)
+              // Normalize product ID for comparison
+              const productIdStr = String(product.id).trim().toLowerCase()
               
-              // If this product has assignments
-              if (productsWithAssignmentsStr.has(productIdStr)) {
-                // Only show if user is logged in AND assigned to this product
-                // Admins are handled above, so we know this is not an admin
+              // Check if this product has ANY assignments
+              const hasAssignments = productsWithAssignmentsStr.has(productIdStr)
+              
+              if (hasAssignments) {
+                // Product HAS assignments - only show if user is assigned
                 if (currentUser) {
-                  const isAssigned = userAssignedProducts.has(productIdStr)
-                  // Only return true if user is explicitly assigned
-                  return isAssigned
+                  // User is logged in - check if they're assigned
+                  const isAssigned = userAssignedProductsNormalized.has(productIdStr)
+                  if (!isAssigned) {
+                    // User is NOT assigned - HIDE this product
+                    console.log(`[Home Filter] ❌ HIDING product ${productIdStr} - user ${currentUser.email} is NOT assigned`)
+                    filteredCount++
+                    return false
+                  }
+                  // User IS assigned - SHOW this product
+                  return true
+                } else {
+                  // User is NOT logged in - HIDE products with assignments
+                  console.log(`[Home Filter] ❌ HIDING product ${productIdStr} - user not logged in`)
+                  filteredCount++
+                  return false
                 }
-                // Not logged in and product has assignments = hide it
-                return false
+              } else {
+                // Product has NO assignments - show to everyone
+                return true
               }
-              // Product has no assignments = show to everyone
-              return true
             })
+            
+            console.log(`[Home Filter] Summary: Filtered out ${filteredCount} products with assignments`)
           }
         } catch (error) {
           console.error('Error filtering products by assignments:', error)
-          // If error occurs, show all products (fallback)
-          filteredProducts = productsData || []
+          // If error occurs, hide all products with assignments for safety
+          // Better to be restrictive than show restricted products
+          filteredProducts = []
         }
       }
       
@@ -182,21 +204,15 @@ export default function Home() {
               <Link
                 key={product.id}
                 href={`/products/${product.id}`}
+                onClick={() => showLoader(t.loader.loading)}
                 className="group bg-white rounded-lg shadow-sm hover:shadow-md transition-all overflow-hidden border border-gray-200 hover:border-nature-green-500"
               >
                 <div className="h-64 bg-gray-50 flex items-center justify-center overflow-hidden relative p-4">
-                  {product.image_url ? (
-                    <img
-                      src={product.image_url}
-                      alt={getTranslation(product.name_translations, language)}
-                      className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-200"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                      <ImageIcon className="w-16 h-16 text-gray-300" />
-                    </div>
-                  )}
+                  <ProductImage
+                    imageUrl={product.image_url}
+                    className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-200"
+                    containerClassName="w-full h-full bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center relative overflow-hidden"
+                  />
                   {(() => {
                     const categoryName = product.category_data 
                       ? getTranslation(product.category_data.name_translations, language)
@@ -219,9 +235,11 @@ export default function Home() {
                     <span className={`inline-block px-2.5 py-1 rounded text-xs font-medium ${
                       (product.stock || 0) > 0
                         ? 'bg-green-100 text-green-800'
-                        : 'bg-red-100 text-red-800'
+                        : 'bg-blue-100 text-blue-800'
                     }`}>
-                      {t.products.stock || 'Stock'}: {(product.stock || 0) > 0 ? product.stock : t.products.outOfStock || 'Out of Stock'}
+                      {(product.stock || 0) > 0 
+                        ? `${t.products.stock || 'Stock'}: ${product.stock}`
+                        : t.products.comingSoon || 'Coming Soon'}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
@@ -348,6 +366,13 @@ export default function Home() {
                   <span className="text-nature-green-600">{t.home.greenexTitle}</span>
                 </h2>
               </div>
+              <div className="mb-6">
+                <img
+                  src="/Innovation.png"
+                  alt="Innovation"
+                  className="w-full h-auto rounded-lg object-cover"
+                />
+              </div>
               <div className="space-y-3 text-gray-600 leading-relaxed text-sm">
                 <p>
                   {t.home.greenexDescription}
@@ -361,6 +386,13 @@ export default function Home() {
                 <h2 className="text-2xl font-semibold text-gray-900 mb-3">
                   <span className="text-nature-green-600">{t.home.productRangeTitle}</span>
                 </h2>
+              </div>
+              <div className="mb-6">
+                <img
+                  src="/All.png"
+                  alt="All Products"
+                  className="w-full h-auto rounded-lg object-cover"
+                />
               </div>
               <div className="space-y-3 text-gray-600 leading-relaxed text-sm">
                 <p>

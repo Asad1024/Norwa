@@ -14,13 +14,15 @@ export default function Navbar() {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
-  const itemCount = useCartStore((state) => state.getItemCount())
+  const itemCount = useCartStore((state) => state.items.length)
   const language = useLanguageStore((state) => state.language)
   const setLanguage = useLanguageStore((state) => state.setLanguage)
+  const resetToDefault = useLanguageStore((state) => state.resetToDefault)
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
+  const [profileImageError, setProfileImageError] = useState(false)
   const { showLoader } = useGlobalLoader()
   const t = useTranslations()
 
@@ -37,14 +39,29 @@ export default function Navbar() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null)
+      // Reset profile image error state when user changes
+      setProfileImageError(false)
+      
+      // Only reset language on actual login/logout events
+      // Do NOT reset on TOKEN_REFRESHED or other events during session
+      if (event === 'SIGNED_OUT') {
+        // User logged out - reset to Norwegian
+        resetToDefault()
+      }
+      // Note: We don't reset on SIGNED_IN here because:
+      // 1. Login page already calls resetToDefault() on successful login
+      // 2. SIGNED_IN can fire on token refresh during session, which would reset language incorrectly
+      // The login page handles the reset, so we don't need to do it here
     })
 
     return () => subscription.unsubscribe()
-  }, [supabase])
+  }, [supabase, resetToDefault])
 
   const handleSignOut = async () => {
+    // Reset language to Norwegian on logout
+    resetToDefault()
     showLoader(t.loader.loading)
     try {
       const { error } = await supabase.auth.signOut()
@@ -212,7 +229,7 @@ export default function Navbar() {
                     className="w-9 h-9 rounded-full bg-gradient-to-br from-nature-green-400 to-nature-green-600 text-white font-semibold text-sm flex items-center justify-center shadow-md hover:shadow-lg transition-all hover:scale-105 overflow-hidden"
                     aria-label="Profile menu"
                   >
-                    {user?.user_metadata?.avatar_url || user?.user_metadata?.picture ? (
+                    {(user?.user_metadata?.avatar_url || user?.user_metadata?.picture) && !profileImageError ? (
                       <Image
                         src={user.user_metadata.avatar_url || user.user_metadata.picture}
                         alt="Profile"
@@ -220,6 +237,7 @@ export default function Navbar() {
                         height={36}
                         className="w-full h-full object-cover"
                         unoptimized
+                        onError={() => setProfileImageError(true)}
                       />
                     ) : (
                       <span>

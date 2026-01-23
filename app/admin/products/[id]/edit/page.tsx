@@ -28,7 +28,11 @@ export default function EditProductPage() {
   const [categories, setCategories] = useState<Category[]>([])
   const [error, setError] = useState('')
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [selectedTechnicalFile, setSelectedTechnicalFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [technicalFileName, setTechnicalFileName] = useState<string>('')
+  const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(null)
+  const [currentTechnicalDataUrl, setCurrentTechnicalDataUrl] = useState<string | null>(null)
   const [activeLanguage, setActiveLanguage] = useState<'en' | 'no'>('en')
   const [formData, setFormData] = useState({
     name_en: '',
@@ -38,7 +42,6 @@ export default function EditProductPage() {
     category_id: '',
     price: '',
     stock: '0',
-    image_url: '',
   })
 
   useEffect(() => {
@@ -77,10 +80,17 @@ export default function EditProductPage() {
             category_id: productData.category_id || '',
             price: productData.price.toString(),
             stock: (productData.stock || 0).toString(),
-            image_url: productData.image_url || '',
           })
           if (productData.image_url) {
             setImagePreview(productData.image_url)
+            setCurrentImageUrl(productData.image_url)
+          }
+          if (productData.technical_data_url) {
+            setCurrentTechnicalDataUrl(productData.technical_data_url)
+            // Extract filename from URL
+            const urlParts = productData.technical_data_url.split('/')
+            const fileName = urlParts[urlParts.length - 1] || 'Technical Data'
+            setTechnicalFileName(fileName)
           }
         }
       } catch (error: any) {
@@ -161,13 +171,65 @@ export default function EditProductPage() {
         setImagePreview(reader.result as string)
       }
       reader.readAsDataURL(file)
-      setFormData({ ...formData, image_url: '' })
+      // Clear selected file
     }
   }
 
   const handleRemoveImage = () => {
     setSelectedFile(null)
     setImagePreview(formData.image_url || null)
+  }
+
+  const handleTechnicalFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const allowedExtensions = ['.pdf', '.doc', '.docx', '.txt']
+      const fileExt = file.name.split('.').pop()?.toLowerCase()
+      if (!fileExt || !allowedExtensions.includes(`.${fileExt}`)) {
+        setError('Please select a PDF, DOC, DOCX, or TXT file')
+        return
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        setError('File size must be less than 10MB')
+        return
+      }
+      setSelectedTechnicalFile(file)
+      setTechnicalFileName(file.name)
+      setError('')
+      // Clear selected technical file
+    }
+  }
+
+  const handleRemoveTechnicalFile = () => {
+    setSelectedTechnicalFile(null)
+    setTechnicalFileName('')
+  }
+
+  const uploadTechnicalData = async (file: File): Promise<string> => {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) {
+      throw new Error('Not authenticated')
+    }
+
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const response = await fetch('/api/admin/upload-technical-data', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+      body: formData,
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Upload failed')
+    }
+
+    const { url, fileName } = await response.json()
+    setTechnicalFileName(fileName)
+    return url
   }
 
   const uploadImage = async (file: File): Promise<string> => {
@@ -212,7 +274,8 @@ export default function EditProductPage() {
         throw new Error('Unauthorized')
       }
 
-      let imageUrl = formData.image_url
+      let imageUrl = currentImageUrl
+      let technicalDataUrl = currentTechnicalDataUrl
 
       if (selectedFile) {
         setUploading(true)
@@ -220,8 +283,7 @@ export default function EditProductPage() {
         try {
           imageUrl = await uploadImage(selectedFile)
           console.log('Image uploaded successfully, URL:', imageUrl)
-          // Update formData with the new image URL
-          setFormData({ ...formData, image_url: imageUrl })
+          setCurrentImageUrl(imageUrl)
           setImagePreview(imageUrl)
           showToast('Image uploaded successfully!', 'success')
           hideLoader()
@@ -230,6 +292,25 @@ export default function EditProductPage() {
           console.error('Upload error:', uploadError)
           showToast(`Image upload failed: ${uploadError.message}`, 'error')
           throw new Error(`Image upload failed: ${uploadError.message}`)
+        } finally {
+          setUploading(false)
+        }
+      }
+
+      // Upload technical data file if selected
+      if (selectedTechnicalFile) {
+        setUploading(true)
+        showLoader(t.loader.loading)
+        try {
+          technicalDataUrl = await uploadTechnicalData(selectedTechnicalFile)
+          console.log('Technical data uploaded, URL:', technicalDataUrl)
+          setCurrentTechnicalDataUrl(technicalDataUrl)
+          showToast('Technical data file uploaded successfully!', 'success')
+          hideLoader()
+        } catch (uploadError: any) {
+          hideLoader()
+          showToast(`Technical data upload failed: ${uploadError.message}`, 'error')
+          throw new Error(`Technical data upload failed: ${uploadError.message}`)
         } finally {
           setUploading(false)
         }
@@ -259,6 +340,7 @@ export default function EditProductPage() {
           price: parseFloat(formData.price),
           stock: parseInt(formData.stock) || 0,
           image_url: imageUrl || null,
+          technical_data_url: technicalDataUrl || null,
           updated_at: new Date().toISOString(),
         })
         .eq('id', params.id)
@@ -515,36 +597,49 @@ export default function EditProductPage() {
                   {t.forms.uploadImage}
                 </p>
               </div>
+            </div>
 
-              {/* URL Input (fallback) */}
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300"></div>
+            {/* Technical Data File Upload */}
+            <div>
+              <label
+                htmlFor="technical_data"
+                className="block text-xs font-medium text-gray-700 mb-2 uppercase tracking-wide"
+              >
+                Technical Data (PDF, DOC, DOCX, TXT)
+              </label>
+              
+              {/* File Name Display */}
+              {technicalFileName && (
+                <div className="mb-4">
+                  <div className="flex items-center gap-2 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                    <span className="text-sm text-gray-700 flex-1 truncate">
+                      {technicalFileName}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleRemoveTechnicalFile}
+                      className="text-red-600 hover:text-red-700 text-sm font-medium"
+                    >
+                      Remove
+                    </button>
+                  </div>
                 </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">{t.forms.or}</span>
-                </div>
+              )}
+
+              {/* File Upload */}
+              <div className="mb-3">
+                <input
+                  id="technical_data"
+                  type="file"
+                  accept=".pdf,.doc,.docx,.txt"
+                  onChange={handleTechnicalFileSelect}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Upload technical documentation (PDF, DOC, DOCX, or TXT). Max 10MB.
+                </p>
               </div>
 
-              <input
-                id="image_url"
-                type="url"
-                value={formData.image_url}
-                onChange={(e) => {
-                  setFormData({ ...formData, image_url: e.target.value })
-                  if (e.target.value) {
-                    setSelectedFile(null)
-                    setImagePreview(e.target.value)
-                  } else if (!selectedFile) {
-                    setImagePreview(null)
-                  }
-                }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent mt-3"
-                placeholder="https://example.com/image.jpg"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                {t.forms.imageUrl}
-              </p>
             </div>
 
             <div className="flex space-x-4 pt-4">

@@ -9,6 +9,7 @@ import Modal from '@/components/Modal'
 import { useTranslations } from '@/hooks/useTranslations'
 import { useLanguageStore } from '@/store/languageStore'
 import { getTranslation } from '@/lib/translations'
+import ProductImage from '@/components/ProductImage'
 
 export default function OrderDetailPage() {
   const router = useRouter()
@@ -270,16 +271,15 @@ export default function OrderDetailPage() {
                       key={item.id}
                       className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200"
                     >
-                      <div className="w-20 h-20 bg-white rounded-lg flex items-center justify-center flex-shrink-0 border border-gray-200">
-                        {item.products?.image_url ? (
-                          <img
-                            src={item.products.image_url}
-                            alt={productName}
-                            className="w-full h-full object-cover rounded-lg"
-                          />
-                        ) : (
-                          <span className="text-3xl">🌿</span>
-                        )}
+                      <div className="w-20 h-20 bg-white rounded-lg flex items-center justify-center flex-shrink-0 border border-gray-200 overflow-hidden">
+                        <ProductImage
+                          imageUrl={item.products?.image_url}
+                          alt={productName}
+                          className="w-full h-full object-cover"
+                          containerClassName="w-full h-full flex items-center justify-center pointer-events-none"
+                          iconSize="small"
+                          showText={false}
+                        />
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="font-bold text-lg text-nature-green-900 mb-1">

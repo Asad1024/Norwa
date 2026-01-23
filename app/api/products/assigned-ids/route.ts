@@ -23,9 +23,10 @@ export async function GET() {
     })
 
     // Get all distinct product IDs that have assignments
+    // IMPORTANT: Select both product_id and id to verify data
     const { data: assignments, error } = await supabaseAdmin
       .from('product_user_assignments')
-      .select('product_id')
+      .select('product_id, id')
 
     if (error) {
       console.error('Error fetching assigned product IDs:', error)
@@ -35,10 +36,18 @@ export async function GET() {
       )
     }
 
-    // Get unique product IDs
+    console.log('[assigned-ids API] Raw assignments from DB:', JSON.stringify(assignments, null, 2))
+
+    // Get unique product IDs (ensure they're strings for consistent comparison)
     const assignedProductIds = Array.from(
-      new Set((assignments || []).map((a: any) => a.product_id))
+      new Set((assignments || []).map((a: any) => {
+        const productId = String(a.product_id).trim()
+        console.log(`[assigned-ids API] Processing assignment: product_id=${productId}`)
+        return productId
+      }))
     )
+    
+    console.log('[assigned-ids API] Final assigned product IDs:', assignedProductIds)
 
     return NextResponse.json({
       assignedProductIds,

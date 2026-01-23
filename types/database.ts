@@ -27,6 +27,7 @@ export interface Product {
   price: number
   stock: number
   image_url: string | null
+  technical_data_url: string | null
   created_at: string
   updated_at: string
   category_data?: Category // For joined queries

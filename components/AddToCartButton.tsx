@@ -24,13 +24,6 @@ export default function AddToCartButton({ product }: AddToCartButtonProps) {
   const language = useLanguageStore((state) => state.language)
 
   const handleAddToCart = async () => {
-    // Check stock before adding to cart
-    if ((product.stock || 0) <= 0) {
-      const productName = getTranslation(product.name_translations, language)
-      showToast(t.productDetail.outOfStock || `${productName} is out of stock`, 'error')
-      return
-    }
-
     const {
       data: { user },
     } = await supabase.auth.getUser()
@@ -71,21 +64,13 @@ export default function AddToCartButton({ product }: AddToCartButtonProps) {
     showToast(`${productName} ${t.productDetail.addedToCart}`, 'success')
   }
 
-  const isOutOfStock = (product.stock || 0) <= 0
-
   return (
     <button
       onClick={handleAddToCart}
-      disabled={loading || isOutOfStock}
-      className={`w-full font-medium py-2.5 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm shadow-md hover:shadow-lg ${
-        isOutOfStock
-          ? 'bg-gray-400 text-white cursor-not-allowed'
-          : 'bg-nature-green-600 hover:bg-nature-green-700 text-white'
-      }`}
+      disabled={loading}
+      className={`w-full font-medium py-2.5 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm shadow-md hover:shadow-lg bg-nature-green-600 hover:bg-nature-green-700 text-white`}
     >
-      {isOutOfStock 
-        ? (t.productDetail.outOfStock || 'Out of Stock')
-        : loading 
+      {loading 
         ? t.productDetail.adding 
         : t.productDetail.addToCart}
     </button>

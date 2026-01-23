@@ -8,10 +8,14 @@ import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/components/ToastProvider'
 import { useGlobalLoader } from '@/components/GlobalLoader'
 import { useTranslations } from '@/hooks/useTranslations'
+import ProductImage from '@/components/ProductImage'
 
 export default function CartPage() {
-  const { items, removeItem, updateQuantity, clearCart, getTotal } =
-    useCartStore()
+  const items = useCartStore((state) => state.items)
+  const removeItem = useCartStore((state) => state.removeItem)
+  const updateQuantity = useCartStore((state) => state.updateQuantity)
+  const clearCart = useCartStore((state) => state.clearCart)
+  const getTotal = useCartStore((state) => state.getTotal)
   const router = useRouter()
   const { showLoader, hideLoader } = useGlobalLoader()
   const [loading, setLoading] = useState(true)
@@ -49,7 +53,7 @@ export default function CartPage() {
 
   if (items.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 py-16 px-4">
+      <div className="min-h-screen py-16 px-4 bg-white" style={{ background: '#ffffff', backgroundImage: 'none' }}>
         <div className="container mx-auto max-w-4xl">
           {/* Empty Cart Header */}
           <div className="text-center mb-12">
@@ -112,7 +116,7 @@ export default function CartPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4">
+    <div className="min-h-screen py-12 px-4 bg-white" style={{ background: '#ffffff', backgroundImage: 'none' }}>
       <div className="container mx-auto max-w-6xl">
         {/* Header */}
         <div className="text-center mb-8">
@@ -138,16 +142,15 @@ export default function CartPage() {
                     className="p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4 hover:bg-gray-50 transition-colors"
                   >
                     {/* Product Image */}
-                    <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 border border-gray-200">
-                      {item.image_url ? (
-                        <img
-                          src={item.image_url}
-                          alt={item.name}
-                          className="w-full h-full object-cover rounded-lg"
-                        />
-                      ) : (
-                        <span className="text-2xl">🌿</span>
-                      )}
+                    <div className="w-20 h-20 rounded-lg flex-shrink-0 border border-gray-200 overflow-hidden relative">
+                      <ProductImage
+                        imageUrl={item.image_url}
+                        alt=""
+                        className="w-full h-full object-cover"
+                        containerClassName="w-full h-full flex items-center justify-center pointer-events-none"
+                        iconSize="small"
+                        showText={false}
+                      />
                     </div>
 
                     {/* Product Info */}
@@ -172,34 +175,44 @@ export default function CartPage() {
                             {item.quantity}
                           </span>
                           <button
-                            onClick={() => {
-                              const maxQuantity = item.stock || 0
-                              if (item.quantity < maxQuantity) {
-                                updateQuantity(item.id, item.quantity + 1)
-                              } else {
-                                showToast(t.cart.maxStockReached || `Maximum stock available: ${maxQuantity}`, 'error')
-                              }
+                            onClick={(e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              // Allow unlimited quantity - no stock restrictions
+                              const currentQuantity = item.quantity
+                              const newQuantity = currentQuantity + 1
+                              console.log('[Cart Page] Increasing quantity:', { 
+                                itemId: item.id, 
+                                currentQuantity, 
+                                newQuantity,
+                                stock: item.stock 
+                              })
+                              updateQuantity(item.id, newQuantity)
                             }}
-                            disabled={(item.stock || 0) <= item.quantity}
-                            className="w-7 h-7 rounded bg-white hover:bg-nature-green-100 text-nature-green-700 font-medium transition-colors text-sm border border-nature-green-200 hover:border-nature-green-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-7 h-7 rounded bg-white hover:bg-nature-green-100 text-nature-green-700 font-medium transition-colors text-sm border border-nature-green-200 hover:border-nature-green-300 cursor-pointer active:scale-95"
+                            type="button"
                           >
                             +
                           </button>
                         </div>
-                        {(item.stock || 0) > 0 && (
-                          <span className="text-xs text-gray-500">
-                            {t.products.stock || 'Stock'}: {item.stock}
-                          </span>
-                        )}
 
                         {/* Remove Button */}
                         <button
-                          onClick={() => {
-                            removeItem(item.id)
-                            showToast(`${item.name} removed from cart`, 'info')
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            const itemId = item.id
+                            const itemName = item.name
+                            removeItem(itemId)
+                            // Use setTimeout to ensure state update happens before toast
+                            setTimeout(() => {
+                              showToast(`${itemName} removed from cart`, 'info')
+                            }, 0)
                           }}
-                          className="px-3 py-1.5 text-red-600 hover:text-red-700 hover:bg-red-50 rounded text-sm font-medium transition-colors border border-red-200 hover:border-red-300"
+                          className="px-3 py-1.5 text-red-600 hover:text-red-700 hover:bg-red-50 rounded text-sm font-medium transition-colors border border-red-200 hover:border-red-300 cursor-pointer relative z-10"
                           title="Remove item"
+                          type="button"
+                          style={{ pointerEvents: 'auto', zIndex: 10, position: 'relative' }}
                         >
                           Remove
                         </button>

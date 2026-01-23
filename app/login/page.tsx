@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useGlobalLoader } from '@/components/GlobalLoader'
 import { useTranslations } from '@/hooks/useTranslations'
+import { useLanguageStore } from '@/store/languageStore'
 
 function LoginContent() {
   const [email, setEmail] = useState('')
@@ -19,6 +20,7 @@ function LoginContent() {
   const supabase = createClient()
   const { showLoader, hideLoader } = useGlobalLoader()
   const t = useTranslations()
+  const resetToDefault = useLanguageStore((state) => state.resetToDefault)
 
   useEffect(() => {
     const authError = searchParams.get('error')
@@ -57,6 +59,9 @@ function LoginContent() {
         }
       }
 
+      // Reset language to Norwegian on login
+      resetToDefault()
+      
       // Get redirect path before clearing
       const redirectAfterLogin = sessionStorage.getItem('redirectAfterLogin')
       const redirectPath = redirectAfterLogin || '/'

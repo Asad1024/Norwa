@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useTranslations } from '@/hooks/useTranslations'
+import { useLanguageStore } from '@/store/languageStore'
 
 function RegisterContent() {
   const [name, setName] = useState('')
@@ -21,6 +22,7 @@ function RegisterContent() {
   const searchParams = useSearchParams()
   const supabase = createClient()
   const t = useTranslations()
+  const resetToDefault = useLanguageStore((state) => state.resetToDefault)
 
   // Check if this is a Google OAuth completion
   useEffect(() => {
