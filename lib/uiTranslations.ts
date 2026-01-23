@@ -110,6 +110,7 @@ export interface UITranslations {
     viewDetails: string
     stock: string
     outOfStock: string
+    comingSoon: string
   }
   productDetail: {
     description: string
