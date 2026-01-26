@@ -158,6 +158,28 @@ export interface UITranslations {
     orderFailed: string
     backToCart: string
     viewOrders: string
+    deliveryInformation: string
+    deliveryType: string
+    deliveryTypeReadyPack: string
+    deliveryTypeStandard: string
+    deliveryTypeExpress: string
+    customer: string
+    address: string
+    postalCode: string
+    postalPlace: string
+    billingInformation: string
+    billingAddress: string
+    payment: string
+    paymentMethodInvoice: string
+    orderInformation: string
+    note: string
+    notePlaceholder: string
+    deliveryTime: string
+    deliveryTimeSelect: string
+    deliveryTimeMorning: string
+    deliveryTimeAfternoon: string
+    deliveryTimeEvening: string
+    deliveryTimeAnytime: string
   }
   login: {
     title: string
@@ -614,6 +636,28 @@ const translations: Record<Language, UITranslations> = {
       orderFailed: 'Failed to place order',
       backToCart: 'Back to Cart',
       viewOrders: 'View Orders',
+      deliveryInformation: 'Delivery Address',
+      deliveryType: 'DELIVERY ADDRESS',
+      deliveryTypeReadyPack: 'Ready-packed (fee)',
+      deliveryTypeStandard: 'Standard delivery',
+      deliveryTypeExpress: 'Express delivery',
+      customer: 'Customer',
+      address: 'Address',
+      postalCode: 'Postal Code',
+      postalPlace: 'Postal Place',
+      billingInformation: 'Invoice',
+      billingAddress: 'BILLING ADDRESS',
+      payment: 'Payment',
+      paymentMethodInvoice: 'Invoice',
+      orderInformation: 'Order Information',
+      note: 'Note / Extra Information',
+      notePlaceholder: 'Add any additional information or special instructions...',
+      deliveryTime: 'Preferred Delivery Time',
+      deliveryTimeSelect: 'Select delivery time',
+      deliveryTimeMorning: 'Morning (9:00 - 12:00)',
+      deliveryTimeAfternoon: 'Afternoon (12:00 - 17:00)',
+      deliveryTimeEvening: 'Evening (17:00 - 20:00)',
+      deliveryTimeAnytime: 'Anytime',
     },
     login: {
       title: 'Login',
@@ -1068,6 +1112,28 @@ const translations: Record<Language, UITranslations> = {
       orderFailed: 'Kunne ikke legge inn bestilling',
       backToCart: 'Tilbake til handlekurv',
       viewOrders: 'Vis bestillinger',
+      deliveryInformation: 'Leveringsadresse',
+      deliveryType: 'LEVERINGSADRESSE',
+      deliveryTypeReadyPack: 'Ferdigpakk (gebyr)',
+      deliveryTypeStandard: 'Standard levering',
+      deliveryTypeExpress: 'Express levering',
+      customer: 'KUNDE',
+      address: 'ADRESSE',
+      postalCode: 'POSTNUMMER',
+      postalPlace: 'POSTSTED',
+      billingInformation: 'Faktura',
+      billingAddress: 'FAKTURAADRESSE',
+      payment: 'Betaling',
+      paymentMethodInvoice: 'Faktura',
+      orderInformation: 'Bestillingsinformasjon',
+      note: 'Note / Ekstra informasjon',
+      notePlaceholder: 'Legg til tilleggsinformasjon eller spesielle instruksjoner...',
+      deliveryTime: 'Foretrukket leveringstid',
+      deliveryTimeSelect: 'Velg leveringstid',
+      deliveryTimeMorning: 'Morgen (9:00 - 12:00)',
+      deliveryTimeAfternoon: 'Ettermiddag (12:00 - 17:00)',
+      deliveryTimeEvening: 'Kveld (17:00 - 20:00)',
+      deliveryTimeAnytime: 'Når som helst',
     },
     login: {
       title: 'Logg inn',

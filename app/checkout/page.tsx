@@ -7,16 +7,19 @@ import { useCartStore } from '@/store/cartStore'
 import { Address } from '@/types/database'
 import Link from 'next/link'
 import { useTranslations } from '@/hooks/useTranslations'
+import { useLanguageStore } from '@/store/languageStore'
 
 export default function CheckoutPage() {
   const router = useRouter()
   const supabase = createClient()
   const { items, clearCart, getTotal } = useCartStore()
+  const language = useLanguageStore((state) => state.language)
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const [savedAddresses, setSavedAddresses] = useState<Address[]>([])
   const [selectedAddressId, setSelectedAddressId] = useState<string>('new')
   const [saveAddress, setSaveAddress] = useState(true)
+  const t = useTranslations()
   const [formData, setFormData] = useState({
     label: 'Home',
     shipping_address: '',
@@ -26,19 +29,29 @@ export default function CheckoutPage() {
     delivery_address: '',
     delivery_postal_code: '',
     delivery_postal_place: '',
-    delivery_type: 'Ferdigpakk (gebyr)',
+    delivery_type: '',
     // Billing Information
     billing_address: '',
     billing_customer: '',
     billing_postal_code: '',
     billing_postal_place: '',
-    payment_method: 'Faktura',
+    payment_method: '',
     // Additional fields
     note: '',
     delivery_time: '',
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const t = useTranslations()
+
+  // Initialize default values based on language
+  useEffect(() => {
+    if (!formData.delivery_type) {
+      setFormData(prev => ({
+        ...prev,
+        delivery_type: t.checkout.deliveryTypeReadyPack,
+        payment_method: t.checkout.paymentMethodInvoice,
+      }))
+    }
+  }, [language, t.checkout.deliveryTypeReadyPack, t.checkout.paymentMethodInvoice, formData.delivery_type])
 
   useEffect(() => {
     const getUser = async () => {
@@ -80,12 +93,12 @@ export default function CheckoutPage() {
           delivery_address: '',
           delivery_postal_code: '',
           delivery_postal_place: '',
-          delivery_type: 'Ferdigpakk (gebyr)',
+          delivery_type: t.checkout.deliveryTypeReadyPack,
           billing_address: '',
           billing_customer: '',
           billing_postal_code: '',
           billing_postal_place: '',
-          payment_method: 'Faktura',
+          payment_method: t.checkout.paymentMethodInvoice,
           note: '',
           delivery_time: '',
         })
@@ -102,17 +115,17 @@ export default function CheckoutPage() {
         phone_number: '',
         delivery_customer: '',
         delivery_address: '',
-        delivery_postal_code: '',
-        delivery_postal_place: '',
-        delivery_type: 'Ferdigpakk (gebyr)',
-        billing_address: '',
-        billing_customer: '',
-        billing_postal_code: '',
-        billing_postal_place: '',
-        payment_method: 'Faktura',
-        note: '',
-        delivery_time: '',
-      })
+          delivery_postal_code: '',
+          delivery_postal_place: '',
+          delivery_type: t.checkout.deliveryTypeReadyPack,
+          billing_address: '',
+          billing_customer: '',
+          billing_postal_code: '',
+          billing_postal_place: '',
+          payment_method: t.checkout.paymentMethodInvoice,
+          note: '',
+          delivery_time: '',
+        })
       setSaveAddress(true)
     } else {
       const address = savedAddresses.find((a) => a.id === addressId)
@@ -125,12 +138,12 @@ export default function CheckoutPage() {
           delivery_address: '',
           delivery_postal_code: '',
           delivery_postal_place: '',
-          delivery_type: 'Ferdigpakk (gebyr)',
+          delivery_type: t.checkout.deliveryTypeReadyPack,
           billing_address: '',
           billing_customer: '',
           billing_postal_code: '',
           billing_postal_place: '',
-          payment_method: 'Faktura',
+          payment_method: t.checkout.paymentMethodInvoice,
           note: '',
           delivery_time: '',
         })
@@ -360,13 +373,13 @@ export default function CheckoutPage() {
                 <div className="bg-nature-green-50 rounded-lg p-6 border-2 border-nature-green-200">
                   <h3 className="text-xl font-bold text-nature-green-800 mb-4 flex items-center gap-2">
                     <span>📍</span>
-                    Leveringsadresse
+                    {t.checkout.deliveryInformation}
                   </h3>
                   
                   <div className="space-y-4">
                     <div>
                       <label htmlFor="delivery_type" className="block text-sm font-semibold text-nature-green-700 mb-2">
-                        LEVERINGSADRESSE *
+                        {t.checkout.deliveryType} *
                       </label>
                       <select
                         id="delivery_type"
@@ -375,15 +388,15 @@ export default function CheckoutPage() {
                         className="w-full px-4 py-3 border-2 border-nature-green-200 rounded-lg focus:ring-2 focus:ring-nature-green-500 focus:border-transparent transition-all"
                         required
                       >
-                        <option value="Ferdigpakk (gebyr)">Ferdigpakk (gebyr)</option>
-                        <option value="Standard levering">Standard levering</option>
-                        <option value="Express levering">Express levering</option>
+                        <option value={t.checkout.deliveryTypeReadyPack}>{t.checkout.deliveryTypeReadyPack}</option>
+                        <option value={t.checkout.deliveryTypeStandard}>{t.checkout.deliveryTypeStandard}</option>
+                        <option value={t.checkout.deliveryTypeExpress}>{t.checkout.deliveryTypeExpress}</option>
                       </select>
                     </div>
 
                     <div>
                       <label htmlFor="delivery_customer" className="block text-sm font-semibold text-nature-green-700 mb-2">
-                        KUNDE *
+                        {t.checkout.customer} *
                       </label>
                       <input
                         id="delivery_customer"
@@ -392,13 +405,13 @@ export default function CheckoutPage() {
                         onChange={(e) => setFormData({ ...formData, delivery_customer: e.target.value })}
                         className="w-full px-4 py-3 border-2 border-nature-green-200 rounded-lg focus:ring-2 focus:ring-nature-green-500 focus:border-transparent transition-all"
                         required
-                        placeholder="Customer name"
+                        placeholder={t.checkout.customer}
                       />
                     </div>
 
                     <div>
                       <label htmlFor="delivery_address" className="block text-sm font-semibold text-nature-green-700 mb-2">
-                        ADRESSE *
+                        {t.checkout.address} *
                       </label>
                       <textarea
                         id="delivery_address"
@@ -407,14 +420,14 @@ export default function CheckoutPage() {
                         rows={3}
                         className="w-full px-4 py-3 border-2 border-nature-green-200 rounded-lg focus:ring-2 focus:ring-nature-green-500 focus:border-transparent transition-all resize-none"
                         required
-                        placeholder="Delivery address"
+                        placeholder={t.checkout.address}
                       />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label htmlFor="delivery_postal_code" className="block text-sm font-semibold text-nature-green-700 mb-2">
-                          POSTNUMMER *
+                          {t.checkout.postalCode} *
                         </label>
                         <input
                           id="delivery_postal_code"
@@ -423,12 +436,12 @@ export default function CheckoutPage() {
                           onChange={(e) => setFormData({ ...formData, delivery_postal_code: e.target.value })}
                           className="w-full px-4 py-3 border-2 border-nature-green-200 rounded-lg focus:ring-2 focus:ring-nature-green-500 focus:border-transparent transition-all"
                           required
-                          placeholder="1234"
+                          placeholder={t.checkout.postalCode}
                         />
                       </div>
                       <div>
                         <label htmlFor="delivery_postal_place" className="block text-sm font-semibold text-nature-green-700 mb-2">
-                          POSTSTED *
+                          {t.checkout.postalPlace} *
                         </label>
                         <input
                           id="delivery_postal_place"
@@ -437,7 +450,7 @@ export default function CheckoutPage() {
                           onChange={(e) => setFormData({ ...formData, delivery_postal_place: e.target.value })}
                           className="w-full px-4 py-3 border-2 border-nature-green-200 rounded-lg focus:ring-2 focus:ring-nature-green-500 focus:border-transparent transition-all"
                           required
-                          placeholder="Oslo"
+                          placeholder={t.checkout.postalPlace}
                         />
                       </div>
                     </div>
@@ -448,13 +461,13 @@ export default function CheckoutPage() {
                 <div className="bg-gray-50 rounded-lg p-6 border-2 border-gray-200">
                   <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
                     <span>📄</span>
-                    Faktura
+                    {t.checkout.billingInformation}
                   </h3>
                   
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        FAKTURAADRESSE
+                        {t.checkout.billingAddress}
                       </label>
                       <div className="bg-white p-4 rounded-lg border border-gray-200">
                         <p className="text-sm text-gray-700 mb-1">Asker & Bærum P</p>
@@ -466,7 +479,7 @@ export default function CheckoutPage() {
 
                     <div>
                       <label htmlFor="billing_customer" className="block text-sm font-semibold text-gray-700 mb-2">
-                        KUNDE
+                        {t.checkout.customer}
                       </label>
                       <input
                         id="billing_customer"
@@ -474,13 +487,13 @@ export default function CheckoutPage() {
                         value={formData.billing_customer}
                         onChange={(e) => setFormData({ ...formData, billing_customer: e.target.value })}
                         className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all"
-                        placeholder="Billing customer name"
+                        placeholder={t.checkout.customer}
                       />
                     </div>
 
                     <div>
                       <label htmlFor="billing_address" className="block text-sm font-semibold text-gray-700 mb-2">
-                        ADRESSE
+                        {t.checkout.address}
                       </label>
                       <textarea
                         id="billing_address"
@@ -488,14 +501,14 @@ export default function CheckoutPage() {
                         onChange={(e) => setFormData({ ...formData, billing_address: e.target.value })}
                         rows={3}
                         className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all resize-none"
-                        placeholder="Billing address"
+                        placeholder={t.checkout.address}
                       />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label htmlFor="billing_postal_code" className="block text-sm font-semibold text-gray-700 mb-2">
-                          POSTNUMMER
+                          {t.checkout.postalCode}
                         </label>
                         <input
                           id="billing_postal_code"
@@ -503,12 +516,12 @@ export default function CheckoutPage() {
                           value={formData.billing_postal_code}
                           onChange={(e) => setFormData({ ...formData, billing_postal_code: e.target.value })}
                           className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all"
-                          placeholder="1234"
+                          placeholder={t.checkout.postalCode}
                         />
                       </div>
                       <div>
                         <label htmlFor="billing_postal_place" className="block text-sm font-semibold text-gray-700 mb-2">
-                          POSTSTED
+                          {t.checkout.postalPlace}
                         </label>
                         <input
                           id="billing_postal_place"
@@ -516,26 +529,26 @@ export default function CheckoutPage() {
                           value={formData.billing_postal_place}
                           onChange={(e) => setFormData({ ...formData, billing_postal_place: e.target.value })}
                           className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all"
-                          placeholder="Oslo"
+                          placeholder={t.checkout.postalPlace}
                         />
                       </div>
                     </div>
 
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Betaling
+                        {t.checkout.payment}
                       </label>
                       <div className="space-y-2">
                         <label className="flex items-center">
                           <input
                             type="radio"
                             name="payment_method"
-                            value="Faktura"
-                            checked={formData.payment_method === 'Faktura'}
+                            value={t.checkout.paymentMethodInvoice}
+                            checked={formData.payment_method === t.checkout.paymentMethodInvoice}
                             onChange={(e) => setFormData({ ...formData, payment_method: e.target.value })}
                             className="mr-2"
                           />
-                          <span className="text-sm text-gray-700">Faktura</span>
+                          <span className="text-sm text-gray-700">{t.checkout.paymentMethodInvoice}</span>
                         </label>
                       </div>
                     </div>
@@ -546,13 +559,13 @@ export default function CheckoutPage() {
                 <div className="bg-blue-50 rounded-lg p-6 border-2 border-blue-200">
                   <h3 className="text-xl font-bold text-blue-800 mb-4 flex items-center gap-2">
                     <span>📝</span>
-                    Bestillingsinformasjon
+                    {t.checkout.orderInformation}
                   </h3>
                   
                   <div className="space-y-4">
                     <div>
                       <label htmlFor="note" className="block text-sm font-semibold text-blue-700 mb-2">
-                        Note / Extra Information
+                        {t.checkout.note}
                       </label>
                       <textarea
                         id="note"
@@ -560,13 +573,13 @@ export default function CheckoutPage() {
                         onChange={(e) => setFormData({ ...formData, note: e.target.value })}
                         rows={4}
                         className="w-full px-4 py-3 border-2 border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
-                        placeholder="Add any additional information or special instructions..."
+                        placeholder={t.checkout.notePlaceholder}
                       />
                     </div>
 
                     <div>
                       <label htmlFor="delivery_time" className="block text-sm font-semibold text-blue-700 mb-2">
-                        Preferred Delivery Time
+                        {t.checkout.deliveryTime}
                       </label>
                       <select
                         id="delivery_time"
@@ -574,11 +587,11 @@ export default function CheckoutPage() {
                         onChange={(e) => setFormData({ ...formData, delivery_time: e.target.value })}
                         className="w-full px-4 py-3 border-2 border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                       >
-                        <option value="">Select delivery time</option>
-                        <option value="Morning (9:00 - 12:00)">Morning (9:00 - 12:00)</option>
-                        <option value="Afternoon (12:00 - 17:00)">Afternoon (12:00 - 17:00)</option>
-                        <option value="Evening (17:00 - 20:00)">Evening (17:00 - 20:00)</option>
-                        <option value="Anytime">Anytime</option>
+                        <option value="">{t.checkout.deliveryTimeSelect}</option>
+                        <option value={t.checkout.deliveryTimeMorning}>{t.checkout.deliveryTimeMorning}</option>
+                        <option value={t.checkout.deliveryTimeAfternoon}>{t.checkout.deliveryTimeAfternoon}</option>
+                        <option value={t.checkout.deliveryTimeEvening}>{t.checkout.deliveryTimeEvening}</option>
+                        <option value={t.checkout.deliveryTimeAnytime}>{t.checkout.deliveryTimeAnytime}</option>
                       </select>
                     </div>
                   </div>
