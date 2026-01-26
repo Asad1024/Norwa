@@ -133,15 +133,17 @@ export default function OrdersPage() {
 
         {/* Search Bar */}
         <div className="mb-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <input
-              type="text"
-              placeholder="Search by order ID, status, date, product name..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-nature-green-500 focus:border-nature-green-500 transition-all"
-            />
+          <div className="max-w-md">
+            <div className="relative">
+              <Search className="absolute left-3.5 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search by order ID, status, date, product name..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-4 py-2.5 pl-11 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all text-sm bg-white"
+              />
+            </div>
           </div>
         </div>
 
@@ -333,6 +335,9 @@ export default function OrdersPage() {
                                       const productName = item.products?.name_translations 
                                         ? getTranslation(item.products.name_translations, language)
                                         : item.products?.name || 'Product'
+                                      const itemSubtotal = item.price * item.quantity
+                                      const itemTax = itemSubtotal * 0.25
+                                      const itemTotal = itemSubtotal + itemTax
                                       return (
                                         <div
                                           key={item.id}
@@ -356,11 +361,16 @@ export default function OrdersPage() {
                                               <p className="text-xs text-gray-500">
                                                 {t.common.quantity}: {item.quantity} × kr {item.price.toFixed(2)}
                                               </p>
+                                              <p className="text-xs text-gray-500">
+                                                Tax (25%): kr {itemTax.toFixed(2)}
+                                              </p>
                                             </div>
                                           </div>
-                                          <p className="font-semibold text-gray-900 text-sm">
-                                            kr {(item.price * item.quantity).toFixed(2)}
-                                          </p>
+                                          <div className="text-right">
+                                            <p className="font-semibold text-gray-900 text-sm">
+                                              kr {itemTotal.toFixed(2)}
+                                            </p>
+                                          </div>
                                         </div>
                                       )
                                     })}

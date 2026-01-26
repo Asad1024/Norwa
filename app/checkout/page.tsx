@@ -34,20 +34,62 @@ export default function CheckoutPage() {
     delivery_instructions: '',
     dispatch_date: '',
     alternative_delivery_address: false,
-    save_information: false,
+    save_delivery_info: false,
+    save_order_info: false,
     delivery_time: '',
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  // Initialize default values based on language
+  // Initialize default values based on language and load saved preferences
   useEffect(() => {
-    if (!formData.delivery_type) {
-      setFormData(prev => ({
-        ...prev,
-        delivery_type: t.checkout.deliveryTypeReadyPack,
-      }))
+    const loadSavedPreferences = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (!user) {
+        // Set default delivery type if no user
+        if (!formData.delivery_type) {
+          setFormData(prev => ({
+            ...prev,
+            delivery_type: t.checkout.deliveryTypeReadyPack,
+          }))
+        }
+        return
+      }
+
+      // Load saved checkout preferences
+      const { data: preferences } = await supabase
+        .from('user_checkout_preferences')
+        .select('*')
+        .eq('user_id', user.id)
+        .single()
+
+      if (preferences) {
+        setFormData(prev => ({
+          ...prev,
+          delivery_customer: preferences.delivery_customer || prev.delivery_customer,
+          delivery_address: preferences.delivery_address || prev.delivery_address,
+          delivery_postal_code: preferences.delivery_postal_code || prev.delivery_postal_code,
+          delivery_postal_place: preferences.delivery_postal_place || prev.delivery_postal_place,
+          delivery_type: preferences.delivery_type || prev.delivery_type || t.checkout.deliveryTypeReadyPack,
+          email_for_order_confirmation: preferences.email_for_order_confirmation || prev.email_for_order_confirmation,
+          customer_reference: preferences.customer_reference || prev.customer_reference,
+          delivery_instructions: preferences.delivery_instructions || prev.delivery_instructions,
+          dispatch_date: preferences.dispatch_date || prev.dispatch_date,
+          delivery_time: preferences.delivery_time || prev.delivery_time,
+          phone_number: preferences.phone_number || prev.phone_number,
+        }))
+      } else if (!formData.delivery_type) {
+        setFormData(prev => ({
+          ...prev,
+          delivery_type: t.checkout.deliveryTypeReadyPack,
+        }))
+      }
     }
-  }, [language, t.checkout.deliveryTypeReadyPack, formData.delivery_type])
+
+    loadSavedPreferences()
+  }, [language, t.checkout.deliveryTypeReadyPack, supabase])
 
   useEffect(() => {
     const getUser = async () => {
@@ -126,8 +168,8 @@ export default function CheckoutPage() {
       // Combine delivery information into shipping_address for backward compatibility
       const fullShippingAddress = `${formData.delivery_customer}\n${formData.delivery_address}\n${formData.delivery_postal_code} ${formData.delivery_postal_place}`
       
-      // Save address if user checked "save information"
-      if (formData.save_information) {
+      // Save delivery address if user checked "save delivery info"
+      if (formData.save_delivery_info) {
         const { data: existingAddresses } = await supabase
           .from('user_addresses')
           .select('*')
@@ -156,6 +198,39 @@ export default function CheckoutPage() {
             user_id: user.id,
           })
         }
+      }
+
+      // Save checkout preferences (delivery and order info) if user checked save options
+      if (formData.save_delivery_info || formData.save_order_info) {
+        const preferencesData: any = {}
+        
+        if (formData.save_delivery_info) {
+          preferencesData.delivery_customer = formData.delivery_customer || null
+          preferencesData.delivery_address = formData.delivery_address || null
+          preferencesData.delivery_postal_code = formData.delivery_postal_code || null
+          preferencesData.delivery_postal_place = formData.delivery_postal_place || null
+          preferencesData.delivery_type = formData.delivery_type || null
+        }
+        
+        if (formData.save_order_info) {
+          preferencesData.email_for_order_confirmation = formData.email_for_order_confirmation || null
+          preferencesData.customer_reference = formData.customer_reference || null
+          preferencesData.delivery_instructions = formData.delivery_instructions || null
+          preferencesData.dispatch_date = formData.dispatch_date || null
+          preferencesData.delivery_time = formData.delivery_time || null
+          preferencesData.phone_number = formData.phone_number || null
+        }
+
+        // Upsert preferences (update if exists, insert if not)
+        await supabase
+          .from('user_checkout_preferences')
+          .upsert({
+            user_id: user.id,
+            ...preferencesData,
+            updated_at: new Date().toISOString(),
+          }, {
+            onConflict: 'user_id'
+          })
       }
 
       const { data: order, error: orderError } = await supabase
@@ -567,17 +642,31 @@ export default function CheckoutPage() {
                       />
                     </div>
 
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        id="save_information"
-                        checked={formData.save_information}
-                        onChange={(e) => setFormData({ ...formData, save_information: e.target.checked })}
-                        className="w-4 h-4 text-blue-600 border-blue-300 rounded focus:ring-blue-500"
-                      />
-                      <label htmlFor="save_information" className="text-sm text-blue-700">
-                        {t.checkout.saveInformationForNextTime}
-                      </label>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          id="save_delivery_info"
+                          checked={formData.save_delivery_info || false}
+                          onChange={(e) => setFormData({ ...formData, save_delivery_info: e.target.checked })}
+                          className="w-4 h-4 text-blue-600 border-blue-300 rounded focus:ring-blue-500"
+                        />
+                        <label htmlFor="save_delivery_info" className="text-sm text-blue-700">
+                          {t.checkout.saveDeliveryInfoForNextTime || 'Save Delivery Information for next time'}
+                        </label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          id="save_order_info"
+                          checked={formData.save_order_info || false}
+                          onChange={(e) => setFormData({ ...formData, save_order_info: e.target.checked })}
+                          className="w-4 h-4 text-blue-600 border-blue-300 rounded focus:ring-blue-500"
+                        />
+                        <label htmlFor="save_order_info" className="text-sm text-blue-700">
+                          {t.checkout.saveOrderInfoForNextTime || 'Save Order Information for next time'}
+                        </label>
+                      </div>
                     </div>
 
                     <div>

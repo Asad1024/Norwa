@@ -36,6 +36,7 @@ export default function ProfilePage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [passwordError, setPasswordError] = useState('')
   const [passwordSuccess, setPasswordSuccess] = useState('')
+  const [checkoutPreferences, setCheckoutPreferences] = useState<any>(null)
 
   useEffect(() => {
     const getUser = async () => {
@@ -81,6 +82,16 @@ export default function ProfilePage() {
       .order('created_at', { ascending: false })
 
     setAddresses(data || [])
+  }
+
+  const fetchCheckoutPreferences = async (userId: string) => {
+    const { data } = await supabase
+      .from('user_checkout_preferences')
+      .select('*')
+      .eq('user_id', userId)
+      .single()
+
+    setCheckoutPreferences(data || null)
   }
 
   const handleSaveAddress = async () => {
@@ -471,6 +482,82 @@ export default function ProfilePage() {
                   </div>
                 )}
               </div>
+
+              {/* Saved Checkout Preferences */}
+              {checkoutPreferences && (checkoutPreferences.delivery_customer || checkoutPreferences.email_for_order_confirmation) && (
+                <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200 mb-6">
+                  <h2 className="text-xl font-semibold text-gray-900 mb-5 flex items-center gap-2">
+                    <svg className="w-5 h-5 text-gray-600" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+                      <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Saved Checkout Information
+                  </h2>
+
+                  {/* Delivery Information */}
+                  {(checkoutPreferences.delivery_customer || checkoutPreferences.delivery_address || checkoutPreferences.delivery_postal_code) && (
+                    <div className="mb-5 p-4 bg-nature-green-50 rounded-lg border border-nature-green-200">
+                      <h3 className="text-sm font-semibold text-nature-green-700 mb-3 uppercase tracking-wide">
+                        {t.checkout.deliveryInformation}
+                      </h3>
+                      {checkoutPreferences.delivery_type && (
+                        <p className="text-sm text-gray-700 mb-2">
+                          <span className="font-medium">{t.checkout.deliveryType}:</span> {checkoutPreferences.delivery_type}
+                        </p>
+                      )}
+                      {checkoutPreferences.delivery_customer && (
+                        <p className="text-sm text-gray-900 font-medium mb-1">{checkoutPreferences.delivery_customer}</p>
+                      )}
+                      {checkoutPreferences.delivery_address && (
+                        <p className="text-sm text-gray-900 mb-1">{checkoutPreferences.delivery_address}</p>
+                      )}
+                      {(checkoutPreferences.delivery_postal_code || checkoutPreferences.delivery_postal_place) && (
+                        <p className="text-sm text-gray-900">
+                          {checkoutPreferences.delivery_postal_code} {checkoutPreferences.delivery_postal_place}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Order Information */}
+                  {(checkoutPreferences.email_for_order_confirmation || checkoutPreferences.customer_reference || checkoutPreferences.delivery_instructions || checkoutPreferences.delivery_time || checkoutPreferences.phone_number || checkoutPreferences.dispatch_date) && (
+                    <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                      <h3 className="text-sm font-semibold text-blue-700 mb-3 uppercase tracking-wide">
+                        {t.checkout.orderInformation}
+                      </h3>
+                      {checkoutPreferences.email_for_order_confirmation && (
+                        <p className="text-sm text-gray-700 mb-1">
+                          <span className="font-medium">{t.checkout.emailForOrderConfirmation}:</span> {checkoutPreferences.email_for_order_confirmation}
+                        </p>
+                      )}
+                      {checkoutPreferences.phone_number && (
+                        <p className="text-sm text-gray-700 mb-1">
+                          <span className="font-medium">{t.checkout.phoneNumber}:</span> {checkoutPreferences.phone_number}
+                        </p>
+                      )}
+                      {checkoutPreferences.customer_reference && (
+                        <p className="text-sm text-gray-700 mb-1">
+                          <span className="font-medium">{t.checkout.customerReference}:</span> {checkoutPreferences.customer_reference}
+                        </p>
+                      )}
+                      {checkoutPreferences.dispatch_date && (
+                        <p className="text-sm text-gray-700 mb-1">
+                          <span className="font-medium">{t.checkout.dispatchDate}:</span> {new Date(checkoutPreferences.dispatch_date).toLocaleDateString()}
+                        </p>
+                      )}
+                      {checkoutPreferences.delivery_time && (
+                        <p className="text-sm text-gray-700 mb-1">
+                          <span className="font-medium">{t.checkout.deliveryTime}:</span> {checkoutPreferences.delivery_time}
+                        </p>
+                      )}
+                      {checkoutPreferences.delivery_instructions && (
+                        <p className="text-sm text-gray-700">
+                          <span className="font-medium">{t.checkout.deliveryInstructions}:</span> {checkoutPreferences.delivery_instructions}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Saved Addresses */}
               <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">

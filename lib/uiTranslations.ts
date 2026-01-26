@@ -189,6 +189,8 @@ export interface UITranslations {
       alternativeDeliveryAddress: string
       alternativeDeliveryAddressDesc: string
       saveInformationForNextTime: string
+      saveDeliveryInfoForNextTime: string
+      saveOrderInfoForNextTime: string
       fieldsRequired: string
   }
   login: {
@@ -677,6 +679,8 @@ const translations: Record<Language, UITranslations> = {
       alternativeDeliveryAddress: 'Different delivery address for this order or other important information?',
       alternativeDeliveryAddressDesc: 'Fill in the desired delivery address below. For permanent changes, please contact our customer service.',
       saveInformationForNextTime: 'Save information for next time',
+      saveDeliveryInfoForNextTime: 'Save Delivery Information for next time',
+      saveOrderInfoForNextTime: 'Save Order Information for next time',
       fieldsRequired: 'Field is required',
     },
     login: {
@@ -1163,6 +1167,8 @@ const translations: Record<Language, UITranslations> = {
       alternativeDeliveryAddress: 'AVVIKENDE LEVERINGSADRESSE FOR DENNE BESTILLING ELLER ANNEN VIKTIG INFORMASJON?',
       alternativeDeliveryAddressDesc: 'Fyll inn ønsket leveringsadresse nedenfor. Ved varig endring, vennligst kontakt vårt kundesenter.',
       saveInformationForNextTime: 'Lagre informasjonen til neste gang',
+      saveDeliveryInfoForNextTime: 'Lagre leveringsinformasjon for neste gang',
+      saveOrderInfoForNextTime: 'Lagre bestillingsinformasjon for neste gang',
       fieldsRequired: 'Felt er påkrevd',
     },
     login: {
