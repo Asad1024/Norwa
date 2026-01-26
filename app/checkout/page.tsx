@@ -133,14 +133,29 @@ export default function CheckoutPage() {
           .select('*')
           .eq('user_id', user.id)
         
+        // Check if a "Home" address already exists
+        const existingHomeAddress = existingAddresses?.find(addr => addr.label === 'Home')
+        
         const addressData: any = {
-          user_id: user.id,
           label: 'Home',
           address: fullShippingAddress,
           phone_number: formData.phone_number || '',
           is_default: (existingAddresses?.length || 0) === 0,
         }
-        await supabase.from('user_addresses').insert(addressData)
+        
+        if (existingHomeAddress) {
+          // Update existing "Home" address instead of creating duplicate
+          await supabase
+            .from('user_addresses')
+            .update(addressData)
+            .eq('id', existingHomeAddress.id)
+        } else {
+          // Insert new address only if "Home" doesn't exist
+          await supabase.from('user_addresses').insert({
+            ...addressData,
+            user_id: user.id,
+          })
+        }
       }
 
       const { data: order, error: orderError } = await supabase
