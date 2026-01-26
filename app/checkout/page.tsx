@@ -152,6 +152,20 @@ export default function CheckoutPage() {
           status: 'pending',
           shipping_address: fullShippingAddress,
           phone_number: formData.phone_number || '',
+          // Delivery Information
+          delivery_customer: formData.delivery_customer || null,
+          delivery_address: formData.delivery_address || null,
+          delivery_postal_code: formData.delivery_postal_code || null,
+          delivery_postal_place: formData.delivery_postal_place || null,
+          delivery_type: formData.delivery_type || null,
+          // Order Information
+          email_for_order_confirmation: formData.email_for_order_confirmation || null,
+          customer_reference: formData.customer_reference || null,
+          delivery_instructions: formData.delivery_instructions || null,
+          dispatch_date: formData.dispatch_date || null,
+          periodic_orders: formData.periodic_orders || false,
+          alternative_delivery_address: formData.alternative_delivery_address || false,
+          delivery_time: formData.delivery_time || null,
         })
         .select()
         .single()

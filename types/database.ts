@@ -59,6 +59,20 @@ export interface Order {
   status: string
   shipping_address: string | null
   phone_number: string | null
+  // Delivery Information
+  delivery_customer: string | null
+  delivery_address: string | null
+  delivery_postal_code: string | null
+  delivery_postal_place: string | null
+  delivery_type: string | null
+  // Order Information
+  email_for_order_confirmation: string | null
+  customer_reference: string | null
+  delivery_instructions: string | null
+  dispatch_date: string | null
+  periodic_orders: boolean | null
+  alternative_delivery_address: boolean | null
+  delivery_time: string | null
   created_at: string
   order_items?: OrderItem[]
 }

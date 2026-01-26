@@ -94,13 +94,70 @@ export default function OrdersPage() {
                   </div>
                 </div>
 
-                {order.shipping_address && (
-                  <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                    <p className="text-xs font-medium text-gray-600 mb-1.5 uppercase tracking-wide">{t.checkout.shippingAddress}</p>
-                    <p className="text-sm text-gray-900">{order.shipping_address}</p>
+                {/* Delivery Information */}
+                {(order.delivery_customer || order.delivery_address || order.delivery_postal_code) && (
+                  <div className="mb-4 p-3 bg-nature-green-50 rounded-lg border border-nature-green-200">
+                    <p className="text-xs font-medium text-nature-green-700 mb-2 uppercase tracking-wide font-semibold">
+                      {t.checkout.deliveryInformation}
+                    </p>
+                    {order.delivery_type && (
+                      <p className="text-sm text-gray-700 mb-1">
+                        <span className="font-medium">{t.checkout.deliveryType}:</span> {order.delivery_type}
+                      </p>
+                    )}
+                    {order.delivery_customer && (
+                      <p className="text-sm text-gray-900 font-medium mb-1">{order.delivery_customer}</p>
+                    )}
+                    {order.delivery_address && (
+                      <p className="text-sm text-gray-900 mb-1">{order.delivery_address}</p>
+                    )}
+                    {(order.delivery_postal_code || order.delivery_postal_place) && (
+                      <p className="text-sm text-gray-900">
+                        {order.delivery_postal_code} {order.delivery_postal_place}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Order Information */}
+                {(order.email_for_order_confirmation || order.customer_reference || order.delivery_instructions || order.delivery_time) && (
+                  <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <p className="text-xs font-medium text-blue-700 mb-2 uppercase tracking-wide font-semibold">
+                      {t.checkout.orderInformation}
+                    </p>
+                    {order.email_for_order_confirmation && (
+                      <p className="text-sm text-gray-700 mb-1">
+                        <span className="font-medium">{t.checkout.emailForOrderConfirmation}:</span> {order.email_for_order_confirmation}
+                      </p>
+                    )}
                     {order.phone_number && (
-                      <p className="text-sm text-gray-600 mt-1.5">
-                        <span className="font-medium">{t.common.phone}:</span> {order.phone_number}
+                      <p className="text-sm text-gray-700 mb-1">
+                        <span className="font-medium">{t.checkout.phoneNumber}:</span> {order.phone_number}
+                      </p>
+                    )}
+                    {order.customer_reference && (
+                      <p className="text-sm text-gray-700 mb-1">
+                        <span className="font-medium">{t.checkout.customerReference}:</span> {order.customer_reference}
+                      </p>
+                    )}
+                    {order.delivery_instructions && (
+                      <p className="text-sm text-gray-700 mb-1">
+                        <span className="font-medium">{t.checkout.deliveryInstructions}:</span> {order.delivery_instructions}
+                      </p>
+                    )}
+                    {order.dispatch_date && (
+                      <p className="text-sm text-gray-700 mb-1">
+                        <span className="font-medium">{t.checkout.dispatchDate}:</span> {new Date(order.dispatch_date).toLocaleDateString()}
+                      </p>
+                    )}
+                    {order.periodic_orders && (
+                      <p className="text-sm text-gray-700 mb-1">
+                        <span className="font-medium">{t.checkout.periodicOrders}:</span> {t.common.yes}
+                      </p>
+                    )}
+                    {order.delivery_time && (
+                      <p className="text-sm text-gray-700">
+                        <span className="font-medium">{t.checkout.deliveryTime}:</span> {order.delivery_time}
                       </p>
                     )}
                   </div>

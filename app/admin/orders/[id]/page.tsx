@@ -236,18 +236,113 @@ export default function OrderDetailPage() {
               </div>
             )}
 
-            {/* Shipping Information */}
-            {order.shipping_address && (
+            {/* Delivery Information */}
+            {(order.delivery_customer || order.delivery_address || order.delivery_postal_code) && (
               <div className="mt-6 pt-6 border-t border-gray-200">
-                <h3 className="text-lg font-bold text-nature-green-800 mb-3">{t.checkout.shippingInfo}</h3>
-                <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                  <p className="text-gray-800 font-medium mb-2">
-                    📍 {order.shipping_address}
-                  </p>
+                <h3 className="text-lg font-bold text-nature-green-800 mb-3 flex items-center gap-2">
+                  <span>📍</span>
+                  {t.checkout.deliveryInformation}
+                </h3>
+                <div className="bg-nature-green-50 rounded-lg p-4 border border-nature-green-200">
+                  {order.delivery_type && (
+                    <div className="mb-3">
+                      <p className="text-sm font-semibold text-nature-green-700 mb-1">{t.checkout.deliveryType}</p>
+                      <p className="text-gray-900">{order.delivery_type}</p>
+                    </div>
+                  )}
+                  {order.delivery_customer && (
+                    <div className="mb-3">
+                      <p className="text-sm font-semibold text-nature-green-700 mb-1">{t.checkout.customer}</p>
+                      <p className="text-gray-900 font-medium">{order.delivery_customer}</p>
+                    </div>
+                  )}
+                  {order.delivery_address && (
+                    <div className="mb-3">
+                      <p className="text-sm font-semibold text-nature-green-700 mb-1">{t.checkout.address}</p>
+                      <p className="text-gray-900">{order.delivery_address}</p>
+                    </div>
+                  )}
+                  {(order.delivery_postal_code || order.delivery_postal_place) && (
+                    <div className="grid grid-cols-2 gap-4">
+                      {order.delivery_postal_code && (
+                        <div>
+                          <p className="text-sm font-semibold text-nature-green-700 mb-1">{t.checkout.postalCode}</p>
+                          <p className="text-gray-900">{order.delivery_postal_code}</p>
+                        </div>
+                      )}
+                      {order.delivery_postal_place && (
+                        <div>
+                          <p className="text-sm font-semibold text-nature-green-700 mb-1">{t.checkout.postalPlace}</p>
+                          <p className="text-gray-900">{order.delivery_postal_place}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Order Information */}
+            {(order.email_for_order_confirmation || order.customer_reference || order.delivery_instructions || order.delivery_time) && (
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <h3 className="text-lg font-bold text-blue-800 mb-3 flex items-center gap-2">
+                  <span>📝</span>
+                  {t.checkout.orderInformation}
+                </h3>
+                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                  {order.email_for_order_confirmation && (
+                    <div className="mb-3">
+                      <p className="text-sm font-semibold text-blue-700 mb-1">{t.checkout.emailForOrderConfirmation}</p>
+                      <p className="text-gray-900">{order.email_for_order_confirmation}</p>
+                    </div>
+                  )}
                   {order.phone_number && (
-                    <p className="text-gray-700">
-                      <span className="font-semibold">{t.common.phone}:</span> {order.phone_number}
-                    </p>
+                    <div className="mb-3">
+                      <p className="text-sm font-semibold text-blue-700 mb-1">{t.checkout.phoneNumber}</p>
+                      <p className="text-gray-900">{order.phone_number}</p>
+                    </div>
+                  )}
+                  {order.customer_reference && (
+                    <div className="mb-3">
+                      <p className="text-sm font-semibold text-blue-700 mb-1">{t.checkout.customerReference}</p>
+                      <p className="text-gray-900">{order.customer_reference}</p>
+                    </div>
+                  )}
+                  {order.delivery_instructions && (
+                    <div className="mb-3">
+                      <p className="text-sm font-semibold text-blue-700 mb-1">{t.checkout.deliveryInstructions}</p>
+                      <p className="text-gray-900 whitespace-pre-wrap">{order.delivery_instructions}</p>
+                    </div>
+                  )}
+                  <div className="grid grid-cols-2 gap-4 mb-3">
+                    {order.dispatch_date && (
+                      <div>
+                        <p className="text-sm font-semibold text-blue-700 mb-1">{t.checkout.dispatchDate}</p>
+                        <p className="text-gray-900">{new Date(order.dispatch_date).toLocaleDateString()}</p>
+                      </div>
+                    )}
+                    {order.delivery_time && (
+                      <div>
+                        <p className="text-sm font-semibold text-blue-700 mb-1">{t.checkout.deliveryTime}</p>
+                        <p className="text-gray-900">{order.delivery_time}</p>
+                      </div>
+                    )}
+                  </div>
+                  {(order.periodic_orders || order.alternative_delivery_address) && (
+                    <div className="flex flex-wrap gap-4">
+                      {order.periodic_orders && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-semibold text-blue-700">{t.checkout.periodicOrders}:</span>
+                          <span className="text-gray-900">{t.common.yes}</span>
+                        </div>
+                      )}
+                      {order.alternative_delivery_address && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-semibold text-blue-700">{t.checkout.alternativeDeliveryAddress}:</span>
+                          <span className="text-gray-900">{t.common.yes}</span>
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>
