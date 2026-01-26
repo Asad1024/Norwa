@@ -48,6 +48,7 @@ export default function AdminDashboard() {
   })
   const [navLinks, setNavLinks] = useState<any[]>([])
   const [savingNavLinks, setSavingNavLinks] = useState(false)
+  const [recentOrdersLimit, setRecentOrdersLimit] = useState(10)
   const t = useTranslations()
 
   useEffect(() => {
@@ -85,7 +86,7 @@ export default function AdminDashboard() {
           supabase.from('orders').select('*', { count: 'exact', head: true }),
           supabase.from('categories').select('*', { count: 'exact', head: true }),
           supabase.from('orders').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
-          supabase.from('orders').select('*').order('created_at', { ascending: false }).limit(10),
+          supabase.from('orders').select('*').order('created_at', { ascending: false }).limit(100),
         ])
 
         setStats({
@@ -524,7 +525,7 @@ export default function AdminDashboard() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {recentOrders.map((order) => (
+                  {recentOrders.slice(0, recentOrdersLimit).map((order) => (
                     <tr
                       key={order.id}
                       className="hover:bg-gray-50 transition-colors"
@@ -573,6 +574,16 @@ export default function AdminDashboard() {
                 </tbody>
               </table>
             </div>
+            {recentOrders.length > recentOrdersLimit && (
+              <div className="mt-4 text-center">
+                <button
+                  onClick={() => setRecentOrdersLimit(recentOrdersLimit + 10)}
+                  className="px-4 py-2 bg-nature-green-600 hover:bg-nature-green-700 text-white font-medium rounded-lg transition-colors text-sm"
+                >
+                  See more ({recentOrders.length - recentOrdersLimit} remaining)
+                </button>
+              </div>
+            )}
           </div>
         )}
 

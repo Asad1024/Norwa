@@ -62,6 +62,9 @@ export async function GET(
               targetUser.user.email?.split('@')[0] || 
               'User',
         role: targetUser.user.user_metadata?.role || 'user',
+        phone: targetUser.user.user_metadata?.phone || 
+               targetUser.user.user_metadata?.phone_number || 
+               null,
       },
     })
   } catch (error: any) {

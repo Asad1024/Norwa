@@ -17,7 +17,7 @@ export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
-  const [selectedStatus, setSelectedStatus] = useState<string>('pending')
+  const [selectedStatus, setSelectedStatus] = useState<string>('all')
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [modal, setModal] = useState<{
@@ -77,7 +77,50 @@ export default function AdminOrdersPage() {
         .order('created_at', { ascending: false })
 
       if (error) throw error
-      setOrders(data || [])
+      
+      // Fetch user information for each order
+      const { data: { session } } = await supabase.auth.getSession()
+      const ordersWithUsers = await Promise.all(
+        (data || []).map(async (order) => {
+          try {
+            if (session) {
+              const userResponse = await fetch(`/api/admin/users/${order.user_id}`, {
+                headers: {
+                  'Authorization': `Bearer ${session.access_token}`,
+                },
+              })
+              
+              if (userResponse.ok) {
+                const userData = await userResponse.json()
+                if (userData.user) {
+                  return {
+                    ...order,
+                    user_name: userData.user.name || userData.user.email?.split('@')[0] || 'Unknown',
+                    user_email: userData.user.email || '',
+                    user_phone: userData.user.phone || order.phone_number || '-',
+                  }
+                }
+              }
+            }
+            return {
+              ...order,
+              user_name: 'Unknown',
+              user_email: '',
+              user_phone: order.phone_number || '-',
+            }
+          } catch (err) {
+            console.error('Error fetching user for order:', err)
+            return {
+              ...order,
+              user_name: 'Unknown',
+              user_email: '',
+              user_phone: order.phone_number || '-',
+            }
+          }
+        })
+      )
+      
+      setOrders(ordersWithUsers)
     } catch (error) {
       console.error('Error fetching orders:', error)
     } finally {
@@ -129,6 +172,7 @@ export default function AdminOrdersPage() {
   // Group orders by status
   const ordersByStatus = useMemo(() => {
     const grouped: Record<string, any[]> = {
+      all: [],
       pending: [],
       processing: [],
       delivered: [],
@@ -136,6 +180,7 @@ export default function AdminOrdersPage() {
     }
 
     orders.forEach((order) => {
+      grouped.all.push(order)
       const status = order.status || 'pending'
       if (grouped[status]) {
         grouped[status].push(order)
@@ -150,6 +195,7 @@ export default function AdminOrdersPage() {
   // Get orders count for each status
   const statusCounts = useMemo(() => {
     return {
+      all: ordersByStatus.all.length,
       pending: ordersByStatus.pending.length,
       processing: ordersByStatus.processing.length,
       delivered: ordersByStatus.delivered.length,
@@ -182,6 +228,15 @@ export default function AdminOrdersPage() {
   }, [ordersByStatus, selectedStatus, searchQuery])
 
   const statusConfig = [
+    {
+      status: 'all',
+      title: 'All Orders',
+      icon: <Package className="w-6 h-6" />,
+      bgColor: 'bg-gray-50',
+      borderColor: 'border-gray-300',
+      textColor: 'text-gray-800',
+      badgeColor: 'bg-gray-100 text-gray-800',
+    },
     {
       status: 'pending',
       title: t.orders.pending,
@@ -256,6 +311,12 @@ export default function AdminOrdersPage() {
         </select>
       </td>
       <td className="py-3 px-4">
+        <div className="text-sm text-gray-900">{order.user_name || 'Unknown'}</div>
+      </td>
+      <td className="py-3 px-4">
+        <div className="text-sm text-gray-600">{order.user_phone || '-'}</div>
+      </td>
+      <td className="py-3 px-4">
         <div className="text-xs text-gray-600 truncate max-w-xs" title={order.shipping_address}>
           {order.shipping_address || '-'}
         </div>
@@ -300,7 +361,7 @@ export default function AdminOrdersPage() {
 
           {/* Status Tabs */}
           <div className="mb-6 bg-white rounded-lg shadow-sm p-4 border border-gray-200">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
               {statusConfig.map((config) => {
                 const isActive = selectedStatus === config.status
                 const count = statusCounts[config.status as keyof typeof statusCounts]
@@ -369,6 +430,8 @@ export default function AdminOrdersPage() {
                       <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">{t.orders.date}</th>
                       <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">{t.orders.total}</th>
                       <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">{t.orders.status}</th>
+                      <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">User Name</th>
+                      <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">Phone Number</th>
                       <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">{t.checkout.shippingAddress}</th>
                       <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">{t.cart.items}</th>
                       <th className="text-right py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider"></th>
