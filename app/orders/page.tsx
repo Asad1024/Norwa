@@ -375,6 +375,49 @@ export default function OrdersPage() {
                                       )
                                     })}
                                   </div>
+                                  
+                                  {/* Order Summary */}
+                                  <div className="mt-4 pt-4 border-t border-gray-300">
+                                    <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">
+                                      Order Summary
+                                    </h3>
+                                    <div className="space-y-2">
+                                      {(() => {
+                                        const itemsSubtotal = order.order_items?.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0) || 0
+                                        // Calculate shipping: total = (items + shipping) * 1.25
+                                        // So: shipping = (total / 1.25) - items
+                                        const calculatedShipping = (order.total / 1.25) - itemsSubtotal
+                                        const shipping = calculatedShipping > 0 ? calculatedShipping : 0
+                                        const tax = (itemsSubtotal + shipping) * 0.25
+                                        return (
+                                          <>
+                                            <div className="flex justify-between text-sm text-gray-600">
+                                              <span>Items ({order.order_items?.length || 0}):</span>
+                                              <span className="font-medium text-gray-900">kr {itemsSubtotal.toFixed(2)}</span>
+                                            </div>
+                                            <div className="flex justify-between text-sm text-gray-600">
+                                              <span>{t.common.shipping}:</span>
+                                              <span className={`font-medium ${shipping === 0 ? 'text-nature-green-600' : 'text-gray-900'}`}>
+                                                {shipping === 0 ? t.common.free : `kr ${shipping.toFixed(2)}`}
+                                              </span>
+                                            </div>
+                                            <div className="flex justify-between text-sm text-gray-600">
+                                              <span>Tax (25%):</span>
+                                              <span className="font-medium text-gray-900">kr {tax.toFixed(2)}</span>
+                                            </div>
+                                            <div className="pt-2 mt-2 border-t border-gray-300">
+                                              <div className="flex justify-between items-center">
+                                                <span className="text-base font-semibold text-gray-900">{t.common.total}:</span>
+                                                <span className="text-lg font-semibold text-gray-900">
+                                                  kr {order.total.toFixed(2)}
+                                                </span>
+                                              </div>
+                                            </div>
+                                          </>
+                                        )
+                                      })()}
+                                    </div>
+                                  </div>
                                 </div>
                               </div>
                             </td>
