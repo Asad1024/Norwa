@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useCartStore } from '@/store/cartStore'
-import { Address } from '@/types/database'
 import Link from 'next/link'
 import { useTranslations } from '@/hooks/useTranslations'
 import { useLanguageStore } from '@/store/languageStore'
@@ -16,12 +15,8 @@ export default function CheckoutPage() {
   const language = useLanguageStore((state) => state.language)
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(false)
-  const [savedAddresses, setSavedAddresses] = useState<Address[]>([])
-  const [selectedAddressId, setSelectedAddressId] = useState<string>('new')
-  const [saveAddress, setSaveAddress] = useState(true)
   const t = useTranslations()
   const [formData, setFormData] = useState({
-    label: 'Home',
     shipping_address: '',
     phone_number: '',
     // Delivery Information
@@ -30,14 +25,14 @@ export default function CheckoutPage() {
     delivery_postal_code: '',
     delivery_postal_place: '',
     delivery_type: '',
-    // Billing Information
-    billing_address: '',
-    billing_customer: '',
-    billing_postal_code: '',
-    billing_postal_place: '',
-    payment_method: '',
-    // Additional fields
-    note: '',
+    // Order Information
+    email_for_order_confirmation: '',
+    customer_reference: '',
+    delivery_instructions: '',
+    dispatch_date: '',
+    periodic_orders: false,
+    alternative_delivery_address: false,
+    save_information: false,
     delivery_time: '',
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -48,10 +43,9 @@ export default function CheckoutPage() {
       setFormData(prev => ({
         ...prev,
         delivery_type: t.checkout.deliveryTypeReadyPack,
-        payment_method: t.checkout.paymentMethodInvoice,
       }))
     }
-  }, [language, t.checkout.deliveryTypeReadyPack, t.checkout.paymentMethodInvoice, formData.delivery_type])
+  }, [language, t.checkout.deliveryTypeReadyPack, formData.delivery_type])
 
   useEffect(() => {
     const getUser = async () => {
@@ -65,111 +59,39 @@ export default function CheckoutPage() {
       }
 
       setUser(user)
-      fetchSavedAddresses(user.id)
     }
 
     getUser()
   }, [supabase, router])
-
-  const fetchSavedAddresses = async (userId: string) => {
-    const { data } = await supabase
-      .from('user_addresses')
-      .select('*')
-      .eq('user_id', userId)
-      .order('is_default', { ascending: false })
-      .order('created_at', { ascending: false })
-
-    if (data) {
-      setSavedAddresses(data)
-      // Auto-select default address if available
-      const defaultAddress = data.find((addr) => addr.is_default)
-      if (defaultAddress) {
-        setSelectedAddressId(defaultAddress.id)
-        setFormData({
-          label: defaultAddress.label || 'Home',
-          shipping_address: defaultAddress.address,
-          phone_number: defaultAddress.phone_number,
-          delivery_customer: '',
-          delivery_address: '',
-          delivery_postal_code: '',
-          delivery_postal_place: '',
-          delivery_type: t.checkout.deliveryTypeReadyPack,
-          billing_address: '',
-          billing_customer: '',
-          billing_postal_code: '',
-          billing_postal_place: '',
-          payment_method: t.checkout.paymentMethodInvoice,
-          note: '',
-          delivery_time: '',
-        })
-      }
-    }
-  }
-
-  const handleAddressSelect = (addressId: string) => {
-    setSelectedAddressId(addressId)
-    if (addressId === 'new') {
-      setFormData({
-        label: 'Home',
-        shipping_address: '',
-        phone_number: '',
-        delivery_customer: '',
-        delivery_address: '',
-          delivery_postal_code: '',
-          delivery_postal_place: '',
-          delivery_type: t.checkout.deliveryTypeReadyPack,
-          billing_address: '',
-          billing_customer: '',
-          billing_postal_code: '',
-          billing_postal_place: '',
-          payment_method: t.checkout.paymentMethodInvoice,
-          note: '',
-          delivery_time: '',
-        })
-      setSaveAddress(true)
-    } else {
-      const address = savedAddresses.find((a) => a.id === addressId)
-      if (address) {
-        setFormData({
-          label: address.label || 'Home',
-          shipping_address: address.address,
-          phone_number: address.phone_number,
-          delivery_customer: '',
-          delivery_address: '',
-          delivery_postal_code: '',
-          delivery_postal_place: '',
-          delivery_type: t.checkout.deliveryTypeReadyPack,
-          billing_address: '',
-          billing_customer: '',
-          billing_postal_code: '',
-          billing_postal_place: '',
-          payment_method: t.checkout.paymentMethodInvoice,
-          note: '',
-          delivery_time: '',
-        })
-        setSaveAddress(false) // Don't save again if using existing address
-      }
-    }
-  }
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
 
     // Validate delivery information
     if (!formData.delivery_customer.trim()) {
-      newErrors.delivery_customer = 'Customer name is required'
+      newErrors.delivery_customer = t.checkout.customer + ' ' + t.common.required.toLowerCase()
     }
     if (!formData.delivery_address.trim()) {
-      newErrors.delivery_address = 'Delivery address is required'
+      newErrors.delivery_address = t.checkout.address + ' ' + t.common.required.toLowerCase()
     }
     if (!formData.delivery_postal_code.trim()) {
-      newErrors.delivery_postal_code = 'Postal code is required'
+      newErrors.delivery_postal_code = t.checkout.postalCode + ' ' + t.common.required.toLowerCase()
     }
     if (!formData.delivery_postal_place.trim()) {
-      newErrors.delivery_postal_place = 'Postal place is required'
+      newErrors.delivery_postal_place = t.checkout.postalPlace + ' ' + t.common.required.toLowerCase()
     }
 
-    // Use phone_number if provided, otherwise not required
+    // Validate order information
+    if (!formData.email_for_order_confirmation.trim()) {
+      newErrors.email_for_order_confirmation = t.checkout.emailForOrderConfirmation + ' ' + t.common.required.toLowerCase()
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email_for_order_confirmation)) {
+      newErrors.email_for_order_confirmation = 'Invalid email format'
+    }
+    if (!formData.customer_reference.trim()) {
+      newErrors.customer_reference = t.checkout.customerReference + ' ' + t.common.required.toLowerCase()
+    }
+
+    // Phone number validation (optional field)
     if (formData.phone_number && !/^\+?[\d\s-()]+$/.test(formData.phone_number)) {
       newErrors.phone_number = t.checkout.phoneInvalid
     }
@@ -189,32 +111,27 @@ export default function CheckoutPage() {
 
     setLoading(true)
     try {
-      // Save address if requested and it's a new address or changed
-      if (saveAddress && (selectedAddressId === 'new' || formData.shipping_address !== savedAddresses.find((a) => a.id === selectedAddressId)?.address)) {
-        const addressData: any = {
-          user_id: user.id,
-          label: formData.label,
-          address: formData.shipping_address,
-          phone_number: formData.phone_number,
-          is_default: savedAddresses.length === 0, // First address is default
-        }
-
-        // If editing existing address, update it
-        if (selectedAddressId !== 'new') {
-          await supabase
-            .from('user_addresses')
-            .update(addressData)
-            .eq('id', selectedAddressId)
-        } else {
-          // Create new address
-          await supabase.from('user_addresses').insert(addressData)
-        }
-      }
-
       // Create order with shipping information (including 25% tax)
       // Combine delivery information into shipping_address for backward compatibility
       const fullShippingAddress = `${formData.delivery_customer}\n${formData.delivery_address}\n${formData.delivery_postal_code} ${formData.delivery_postal_place}`
       
+      // Save address if user checked "save information"
+      if (formData.save_information) {
+        const { data: existingAddresses } = await supabase
+          .from('user_addresses')
+          .select('*')
+          .eq('user_id', user.id)
+        
+        const addressData: any = {
+          user_id: user.id,
+          label: 'Home',
+          address: fullShippingAddress,
+          phone_number: formData.phone_number || '',
+          is_default: (existingAddresses?.length || 0) === 0,
+        }
+        await supabase.from('user_addresses').insert(addressData)
+      }
+
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
@@ -402,11 +319,21 @@ export default function CheckoutPage() {
                         id="delivery_customer"
                         type="text"
                         value={formData.delivery_customer}
-                        onChange={(e) => setFormData({ ...formData, delivery_customer: e.target.value })}
-                        className="w-full px-4 py-3 border-2 border-nature-green-200 rounded-lg focus:ring-2 focus:ring-nature-green-500 focus:border-transparent transition-all"
+                        onChange={(e) => {
+                          setFormData({ ...formData, delivery_customer: e.target.value })
+                          if (errors.delivery_customer) {
+                            setErrors({ ...errors, delivery_customer: '' })
+                          }
+                        }}
+                        className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-nature-green-500 focus:border-transparent transition-all ${
+                          errors.delivery_customer ? 'border-red-300' : 'border-nature-green-200'
+                        }`}
                         required
                         placeholder={t.checkout.customer}
                       />
+                      {errors.delivery_customer && (
+                        <p className="text-red-600 text-sm mt-1">{errors.delivery_customer}</p>
+                      )}
                     </div>
 
                     <div>
@@ -416,12 +343,22 @@ export default function CheckoutPage() {
                       <textarea
                         id="delivery_address"
                         value={formData.delivery_address}
-                        onChange={(e) => setFormData({ ...formData, delivery_address: e.target.value })}
+                        onChange={(e) => {
+                          setFormData({ ...formData, delivery_address: e.target.value })
+                          if (errors.delivery_address) {
+                            setErrors({ ...errors, delivery_address: '' })
+                          }
+                        }}
                         rows={3}
-                        className="w-full px-4 py-3 border-2 border-nature-green-200 rounded-lg focus:ring-2 focus:ring-nature-green-500 focus:border-transparent transition-all resize-none"
+                        className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-nature-green-500 focus:border-transparent transition-all resize-none ${
+                          errors.delivery_address ? 'border-red-300' : 'border-nature-green-200'
+                        }`}
                         required
                         placeholder={t.checkout.address}
                       />
+                      {errors.delivery_address && (
+                        <p className="text-red-600 text-sm mt-1">{errors.delivery_address}</p>
+                      )}
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
@@ -433,11 +370,21 @@ export default function CheckoutPage() {
                           id="delivery_postal_code"
                           type="text"
                           value={formData.delivery_postal_code}
-                          onChange={(e) => setFormData({ ...formData, delivery_postal_code: e.target.value })}
-                          className="w-full px-4 py-3 border-2 border-nature-green-200 rounded-lg focus:ring-2 focus:ring-nature-green-500 focus:border-transparent transition-all"
+                          onChange={(e) => {
+                            setFormData({ ...formData, delivery_postal_code: e.target.value })
+                            if (errors.delivery_postal_code) {
+                              setErrors({ ...errors, delivery_postal_code: '' })
+                            }
+                          }}
+                          className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-nature-green-500 focus:border-transparent transition-all ${
+                            errors.delivery_postal_code ? 'border-red-300' : 'border-nature-green-200'
+                          }`}
                           required
                           placeholder={t.checkout.postalCode}
                         />
+                        {errors.delivery_postal_code && (
+                          <p className="text-red-600 text-xs mt-1">{errors.delivery_postal_code}</p>
+                        )}
                       </div>
                       <div>
                         <label htmlFor="delivery_postal_place" className="block text-sm font-semibold text-nature-green-700 mb-2">
@@ -447,115 +394,27 @@ export default function CheckoutPage() {
                           id="delivery_postal_place"
                           type="text"
                           value={formData.delivery_postal_place}
-                          onChange={(e) => setFormData({ ...formData, delivery_postal_place: e.target.value })}
-                          className="w-full px-4 py-3 border-2 border-nature-green-200 rounded-lg focus:ring-2 focus:ring-nature-green-500 focus:border-transparent transition-all"
+                          onChange={(e) => {
+                            setFormData({ ...formData, delivery_postal_place: e.target.value })
+                            if (errors.delivery_postal_place) {
+                              setErrors({ ...errors, delivery_postal_place: '' })
+                            }
+                          }}
+                          className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-nature-green-500 focus:border-transparent transition-all ${
+                            errors.delivery_postal_place ? 'border-red-300' : 'border-nature-green-200'
+                          }`}
                           required
                           placeholder={t.checkout.postalPlace}
                         />
+                        {errors.delivery_postal_place && (
+                          <p className="text-red-600 text-xs mt-1">{errors.delivery_postal_place}</p>
+                        )}
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Billing Information Section */}
-                <div className="bg-gray-50 rounded-lg p-6 border-2 border-gray-200">
-                  <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                    <span>📄</span>
-                    {t.checkout.billingInformation}
-                  </h3>
-                  
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        {t.checkout.billingAddress}
-                      </label>
-                      <div className="bg-white p-4 rounded-lg border border-gray-200">
-                        <p className="text-sm text-gray-700 mb-1">Asker & Bærum P</p>
-                        <p className="text-sm text-gray-700 mb-1">Mohammad Shah</p>
-                        <p className="text-sm text-gray-700 mb-1">Paalbergsvei 60</p>
-                        <p className="text-sm text-gray-700">1348 Rykkinn</p>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label htmlFor="billing_customer" className="block text-sm font-semibold text-gray-700 mb-2">
-                        {t.checkout.customer}
-                      </label>
-                      <input
-                        id="billing_customer"
-                        type="text"
-                        value={formData.billing_customer}
-                        onChange={(e) => setFormData({ ...formData, billing_customer: e.target.value })}
-                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all"
-                        placeholder={t.checkout.customer}
-                      />
-                    </div>
-
-                    <div>
-                      <label htmlFor="billing_address" className="block text-sm font-semibold text-gray-700 mb-2">
-                        {t.checkout.address}
-                      </label>
-                      <textarea
-                        id="billing_address"
-                        value={formData.billing_address}
-                        onChange={(e) => setFormData({ ...formData, billing_address: e.target.value })}
-                        rows={3}
-                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all resize-none"
-                        placeholder={t.checkout.address}
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label htmlFor="billing_postal_code" className="block text-sm font-semibold text-gray-700 mb-2">
-                          {t.checkout.postalCode}
-                        </label>
-                        <input
-                          id="billing_postal_code"
-                          type="text"
-                          value={formData.billing_postal_code}
-                          onChange={(e) => setFormData({ ...formData, billing_postal_code: e.target.value })}
-                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all"
-                          placeholder={t.checkout.postalCode}
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor="billing_postal_place" className="block text-sm font-semibold text-gray-700 mb-2">
-                          {t.checkout.postalPlace}
-                        </label>
-                        <input
-                          id="billing_postal_place"
-                          type="text"
-                          value={formData.billing_postal_place}
-                          onChange={(e) => setFormData({ ...formData, billing_postal_place: e.target.value })}
-                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all"
-                          placeholder={t.checkout.postalPlace}
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        {t.checkout.payment}
-                      </label>
-                      <div className="space-y-2">
-                        <label className="flex items-center">
-                          <input
-                            type="radio"
-                            name="payment_method"
-                            value={t.checkout.paymentMethodInvoice}
-                            checked={formData.payment_method === t.checkout.paymentMethodInvoice}
-                            onChange={(e) => setFormData({ ...formData, payment_method: e.target.value })}
-                            className="mr-2"
-                          />
-                          <span className="text-sm text-gray-700">{t.checkout.paymentMethodInvoice}</span>
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Note Section and Delivery Time */}
+                {/* Order Information Section */}
                 <div className="bg-blue-50 rounded-lg p-6 border-2 border-blue-200">
                   <h3 className="text-xl font-bold text-blue-800 mb-4 flex items-center gap-2">
                     <span>📝</span>
@@ -564,17 +423,151 @@ export default function CheckoutPage() {
                   
                   <div className="space-y-4">
                     <div>
-                      <label htmlFor="note" className="block text-sm font-semibold text-blue-700 mb-2">
-                        {t.checkout.note}
+                      <label htmlFor="email_for_order_confirmation" className="block text-sm font-semibold text-blue-700 mb-2">
+                        {t.checkout.emailForOrderConfirmation} *
+                      </label>
+                      <input
+                        id="email_for_order_confirmation"
+                        type="email"
+                        value={formData.email_for_order_confirmation}
+                        onChange={(e) => {
+                          setFormData({ ...formData, email_for_order_confirmation: e.target.value })
+                          if (errors.email_for_order_confirmation) {
+                            setErrors({ ...errors, email_for_order_confirmation: '' })
+                          }
+                        }}
+                        className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                          errors.email_for_order_confirmation ? 'border-red-300' : 'border-blue-200'
+                        }`}
+                        required
+                        placeholder={t.checkout.emailForOrderConfirmation}
+                      />
+                      {errors.email_for_order_confirmation && (
+                        <p className="text-red-600 text-sm mt-1">{errors.email_for_order_confirmation}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label htmlFor="phone_number" className="block text-sm font-semibold text-blue-700 mb-2">
+                        {t.checkout.phoneNumber}
+                      </label>
+                      <input
+                        id="phone_number"
+                        type="tel"
+                        value={formData.phone_number}
+                        onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+                        className="w-full px-4 py-3 border-2 border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        placeholder={t.checkout.phoneNumber}
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="customer_reference" className="block text-sm font-semibold text-blue-700 mb-2">
+                        {t.checkout.customerReference} *
+                      </label>
+                      <input
+                        id="customer_reference"
+                        type="text"
+                        value={formData.customer_reference}
+                        onChange={(e) => {
+                          setFormData({ ...formData, customer_reference: e.target.value })
+                          if (errors.customer_reference) {
+                            setErrors({ ...errors, customer_reference: '' })
+                          }
+                        }}
+                        className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                          errors.customer_reference ? 'border-red-300' : 'border-blue-200'
+                        }`}
+                        required
+                        placeholder={t.checkout.customerReference}
+                      />
+                      {errors.customer_reference && (
+                        <p className="text-red-600 text-sm mt-1">{errors.customer_reference}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label htmlFor="delivery_instructions" className="block text-sm font-semibold text-blue-700 mb-2">
+                        {t.checkout.deliveryInstructions}
                       </label>
                       <textarea
-                        id="note"
-                        value={formData.note}
-                        onChange={(e) => setFormData({ ...formData, note: e.target.value })}
-                        rows={4}
+                        id="delivery_instructions"
+                        value={formData.delivery_instructions}
+                        onChange={(e) => setFormData({ ...formData, delivery_instructions: e.target.value })}
+                        rows={3}
                         className="w-full px-4 py-3 border-2 border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
-                        placeholder={t.checkout.notePlaceholder}
+                        placeholder={t.checkout.deliveryInstructions}
                       />
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="save_information"
+                        checked={formData.save_information}
+                        onChange={(e) => setFormData({ ...formData, save_information: e.target.checked })}
+                        className="w-4 h-4 text-blue-600 border-blue-300 rounded focus:ring-blue-500"
+                      />
+                      <label htmlFor="save_information" className="text-sm text-blue-700">
+                        {t.checkout.saveInformationForNextTime}
+                      </label>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label htmlFor="dispatch_date" className="block text-sm font-semibold text-blue-700 mb-2">
+                          {t.checkout.dispatchDate}
+                        </label>
+                        <input
+                          id="dispatch_date"
+                          type="date"
+                          value={formData.dispatch_date}
+                          onChange={(e) => setFormData({ ...formData, dispatch_date: e.target.value })}
+                          className="w-full px-4 py-3 border-2 border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        />
+                      </div>
+                      <div className="flex items-end">
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            id="periodic_orders"
+                            checked={formData.periodic_orders}
+                            onChange={(e) => setFormData({ ...formData, periodic_orders: e.target.checked })}
+                            className="w-4 h-4 text-blue-600 border-blue-300 rounded focus:ring-blue-500"
+                          />
+                          <label htmlFor="periodic_orders" className="text-sm text-blue-700">
+                            {t.checkout.periodicOrders}
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <label htmlFor="alternative_delivery_address" className="block text-sm font-semibold text-blue-700">
+                          {t.checkout.alternativeDeliveryAddress}
+                        </label>
+                        <input
+                          type="checkbox"
+                          id="alternative_delivery_address"
+                          checked={formData.alternative_delivery_address}
+                          onChange={(e) => setFormData({ ...formData, alternative_delivery_address: e.target.checked })}
+                          className="w-4 h-4 text-blue-600 border-blue-300 rounded focus:ring-blue-500"
+                        />
+                        <span className="text-sm text-blue-700">{t.common.yes}</span>
+                      </div>
+                      {formData.alternative_delivery_address && (
+                        <div className="mt-2 p-3 bg-white rounded-lg border border-blue-200">
+                          <p className="text-xs text-blue-600 mb-2">
+                            {t.checkout.alternativeDeliveryAddressDesc}
+                          </p>
+                          <textarea
+                            rows={3}
+                            className="w-full px-3 py-2 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none text-sm"
+                            placeholder={t.checkout.address}
+                          />
+                        </div>
+                      )}
                     </div>
 
                     <div>
@@ -594,164 +587,13 @@ export default function CheckoutPage() {
                         <option value={t.checkout.deliveryTimeAnytime}>{t.checkout.deliveryTimeAnytime}</option>
                       </select>
                     </div>
+
+                    <p className="text-xs text-red-600">
+                      * {t.checkout.fieldsRequired}
+                    </p>
                   </div>
                 </div>
 
-                {/* Legacy fields for backward compatibility */}
-                <div className="hidden">
-                  <input
-                    type="text"
-                    value={formData.shipping_address || `${formData.delivery_address}, ${formData.delivery_postal_code} ${formData.delivery_postal_place}`}
-                    readOnly
-                  />
-                </div>
-                {/* Saved Addresses Dropdown */}
-                {savedAddresses.length > 0 && (
-                  <div>
-                    <label
-                      htmlFor="saved_address"
-                      className="block text-sm font-semibold text-nature-green-700 mb-2"
-                    >
-                      {t.checkout.selectAddress}
-                    </label>
-                    <select
-                      id="saved_address"
-                      value={selectedAddressId}
-                      onChange={(e) => handleAddressSelect(e.target.value)}
-                      className="w-full px-4 py-3 border-2 border-nature-green-200 rounded-lg focus:ring-2 focus:ring-nature-green-500 focus:border-transparent transition-all"
-                    >
-                      <option value="new">{t.checkout.newAddress}</option>
-                      {savedAddresses.map((address) => (
-                        <option key={address.id} value={address.id}>
-                          {address.label || 'Home'} {address.is_default && '(Default)'} - {address.address.substring(0, 30)}...
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-
-                {selectedAddressId !== 'new' && savedAddresses.length > 0 && (
-                  <div className="p-4 bg-nature-green-50 rounded-lg border-2 border-nature-green-200">
-                    <p className="text-sm text-gray-600 mb-1">
-                      <span className="font-semibold">{t.common.address}:</span> {formData.shipping_address}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      <span className="font-semibold">{t.common.phone}:</span> {formData.phone_number}
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => handleAddressSelect('new')}
-                      className="mt-2 text-sm text-nature-green-600 hover:text-nature-green-700 font-semibold underline"
-                    >
-                      {t.checkout.newAddress}
-                    </button>
-                  </div>
-                )}
-
-                {/* Address Label (only for new addresses) */}
-                {selectedAddressId === 'new' && (
-                  <div>
-                    <label
-                      htmlFor="label"
-                      className="block text-sm font-semibold text-nature-green-700 mb-2"
-                    >
-                      {t.checkout.addressLabel}
-                    </label>
-                    <input
-                      id="label"
-                      type="text"
-                      value={formData.label}
-                      onChange={(e) => setFormData({ ...formData, label: e.target.value })}
-                      className="w-full px-4 py-3 border-2 border-nature-green-200 rounded-lg focus:ring-2 focus:ring-nature-green-500 focus:border-transparent transition-all"
-                      placeholder="Home"
-                    />
-                  </div>
-                )}
-
-                {/* Shipping Address */}
-                <div>
-                  <label
-                    htmlFor="shipping_address"
-                    className="block text-sm font-semibold text-nature-green-700 mb-2"
-                  >
-                    {t.checkout.shippingAddress} *
-                  </label>
-                  <textarea
-                    id="shipping_address"
-                    value={formData.shipping_address}
-                    onChange={(e) => {
-                      setFormData({ ...formData, shipping_address: e.target.value })
-                      if (errors.shipping_address) {
-                        setErrors({ ...errors, shipping_address: '' })
-                      }
-                    }}
-                    required
-                    rows={4}
-                    className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-nature-green-500 focus:border-transparent transition-all resize-none ${
-                      errors.shipping_address
-                        ? 'border-red-300'
-                        : 'border-nature-green-200'
-                    }`}
-                    placeholder="Enter your full shipping address..."
-                  />
-                  {errors.shipping_address && (
-                    <p className="text-red-600 text-sm mt-1">
-                      {errors.shipping_address}
-                    </p>
-                  )}
-                </div>
-
-                {/* Phone Number */}
-                <div>
-                  <label
-                    htmlFor="phone_number"
-                    className="block text-sm font-semibold text-nature-green-700 mb-2"
-                  >
-                    {t.checkout.phoneNumber} *
-                  </label>
-                  <input
-                    id="phone_number"
-                    type="tel"
-                    value={formData.phone_number}
-                    onChange={(e) => {
-                      setFormData({ ...formData, phone_number: e.target.value })
-                      if (errors.phone_number) {
-                        setErrors({ ...errors, phone_number: '' })
-                      }
-                    }}
-                    required
-                    className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-nature-green-500 focus:border-transparent transition-all ${
-                      errors.phone_number
-                        ? 'border-red-300'
-                        : 'border-nature-green-200'
-                    }`}
-                    placeholder="+47 123 45 678"
-                  />
-                  {errors.phone_number && (
-                    <p className="text-red-600 text-sm mt-1">
-                      {errors.phone_number}
-                    </p>
-                  )}
-                </div>
-
-                {/* Save Address Checkbox (only for new addresses) */}
-                {selectedAddressId === 'new' && (
-                  <div className="flex items-center p-4 bg-nature-green-50 rounded-lg border-2 border-nature-green-200">
-                    <input
-                      type="checkbox"
-                      id="save_address"
-                      checked={saveAddress}
-                      onChange={(e) => setSaveAddress(e.target.checked)}
-                      className="w-5 h-5 text-nature-green-600 border-nature-green-300 rounded focus:ring-nature-green-500"
-                    />
-                    <label
-                      htmlFor="save_address"
-                      className="ml-3 text-sm font-medium text-nature-green-800"
-                    >
-                      {t.checkout.saveAddress}
-                    </label>
-                  </div>
-                )}
 
                 <div className="flex gap-4 pt-4">
                   <Link

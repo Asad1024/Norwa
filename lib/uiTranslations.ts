@@ -174,12 +174,21 @@ export interface UITranslations {
     orderInformation: string
     note: string
     notePlaceholder: string
-    deliveryTime: string
-    deliveryTimeSelect: string
-    deliveryTimeMorning: string
-    deliveryTimeAfternoon: string
-    deliveryTimeEvening: string
-    deliveryTimeAnytime: string
+      deliveryTime: string
+      deliveryTimeSelect: string
+      deliveryTimeMorning: string
+      deliveryTimeAfternoon: string
+      deliveryTimeEvening: string
+      deliveryTimeAnytime: string
+      emailForOrderConfirmation: string
+      customerReference: string
+      deliveryInstructions: string
+      dispatchDate: string
+      periodicOrders: string
+      alternativeDeliveryAddress: string
+      alternativeDeliveryAddressDesc: string
+      saveInformationForNextTime: string
+      fieldsRequired: string
   }
   login: {
     title: string
@@ -658,6 +667,15 @@ const translations: Record<Language, UITranslations> = {
       deliveryTimeAfternoon: 'Afternoon (12:00 - 17:00)',
       deliveryTimeEvening: 'Evening (17:00 - 20:00)',
       deliveryTimeAnytime: 'Anytime',
+      emailForOrderConfirmation: 'Email for order confirmation',
+      customerReference: 'Customer reference',
+      deliveryInstructions: 'Delivery instructions',
+      dispatchDate: 'Dispatch date',
+      periodicOrders: 'Periodic orders',
+      alternativeDeliveryAddress: 'Different delivery address for this order or other important information?',
+      alternativeDeliveryAddressDesc: 'Fill in the desired delivery address below. For permanent changes, please contact our customer service.',
+      saveInformationForNextTime: 'Save information for next time',
+      fieldsRequired: 'Field is required',
     },
     login: {
       title: 'Login',
@@ -1134,6 +1152,15 @@ const translations: Record<Language, UITranslations> = {
       deliveryTimeAfternoon: 'Ettermiddag (12:00 - 17:00)',
       deliveryTimeEvening: 'Kveld (17:00 - 20:00)',
       deliveryTimeAnytime: 'Når som helst',
+      emailForOrderConfirmation: 'E-POST FOR ORDREBEKREFTELSE',
+      customerReference: 'KUNDEREFERANSE',
+      deliveryInstructions: 'LEVERINGSANVISNING',
+      dispatchDate: 'UTSENDELSESDATO',
+      periodicOrders: 'Periodiske ordre',
+      alternativeDeliveryAddress: 'AVVIKENDE LEVERINGSADRESSE FOR DENNE BESTILLING ELLER ANNEN VIKTIG INFORMASJON?',
+      alternativeDeliveryAddressDesc: 'Fyll inn ønsket leveringsadresse nedenfor. Ved varig endring, vennligst kontakt vårt kundesenter.',
+      saveInformationForNextTime: 'Lagre informasjonen til neste gang',
+      fieldsRequired: 'Felt er påkrevd',
     },
     login: {
       title: 'Logg inn',
