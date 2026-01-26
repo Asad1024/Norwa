@@ -43,6 +43,7 @@ export default function CartPage() {
   }, [supabase, router, showLoader, hideLoader])
 
   const handleCheckout = () => {
+    showLoader(t.loader.loading || 'Loading checkout...')
     router.push('/checkout')
     // Loader will auto-hide when navigation completes
   }

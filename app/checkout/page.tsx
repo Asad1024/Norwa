@@ -87,7 +87,7 @@ export default function CheckoutPage() {
         }
       }
 
-      // Load default order info
+      // Load default order info - ONLY if it exists in user_order_info table (shown in profile)
       const { data: defaultOrderInfo } = await supabase
         .from('user_order_info')
         .select('*')
@@ -107,27 +107,6 @@ export default function CheckoutPage() {
         }))
       }
 
-      // Fallback: Load old checkout preferences if no default order info exists
-      if (!defaultOrderInfo) {
-        const { data: preferences } = await supabase
-          .from('user_checkout_preferences')
-          .select('*')
-          .eq('user_id', user.id)
-          .single()
-
-        if (preferences) {
-          setFormData(prev => ({
-            ...prev,
-            email_for_order_confirmation: preferences.email_for_order_confirmation || prev.email_for_order_confirmation,
-            customer_reference: preferences.customer_reference || prev.customer_reference,
-            delivery_instructions: preferences.delivery_instructions || prev.delivery_instructions,
-            dispatch_date: preferences.dispatch_date || prev.dispatch_date,
-            delivery_time: preferences.delivery_time || prev.delivery_time,
-            phone_number: preferences.phone_number || prev.phone_number,
-          }))
-        }
-      }
-
       // Set default delivery type if not set
       if (!formData.delivery_type) {
         setFormData(prev => ({
@@ -142,20 +121,23 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     const getUser = async () => {
+      showLoader(t.loader.loading || 'Loading...')
       const {
         data: { user },
       } = await supabase.auth.getUser()
 
       if (!user) {
+        hideLoader()
         router.push('/login')
         return
       }
 
       setUser(user)
+      hideLoader()
     }
 
     getUser()
-  }, [supabase, router])
+  }, [supabase, router, showLoader, hideLoader])
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
@@ -349,23 +331,7 @@ export default function CheckoutPage() {
   }
 
   if (!user || items.length === 0) {
-    return (
-      <div className="container mx-auto px-4 py-12 text-center">
-        {items.length === 0 ? (
-          <>
-            <p className="text-lg text-gray-600 mb-4">{t.cart.emptyTitle}</p>
-            <Link
-              href="/products"
-              className="inline-block bg-nature-green-600 hover:bg-nature-green-700 text-white font-semibold py-3 px-8 rounded-lg transition-colors"
-            >
-              {t.cart.continueShopping}
-            </Link>
-          </>
-        ) : (
-          <p className="text-lg">{t.login.welcome}</p>
-        )}
-      </div>
-    )
+    return null // Global loader is showing or will show
   }
 
   return (
