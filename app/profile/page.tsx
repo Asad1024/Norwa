@@ -37,6 +37,18 @@ export default function ProfilePage() {
   const [passwordError, setPasswordError] = useState('')
   const [passwordSuccess, setPasswordSuccess] = useState('')
   const [checkoutPreferences, setCheckoutPreferences] = useState<any>(null)
+  const [orderInfoEntries, setOrderInfoEntries] = useState<any[]>([])
+  const [editingOrderInfo, setEditingOrderInfo] = useState<string | null>(null)
+  const [showAddOrderInfo, setShowAddOrderInfo] = useState(false)
+  const [orderInfoForm, setOrderInfoForm] = useState({
+    label: 'Default',
+    email_for_order_confirmation: '',
+    customer_reference: '',
+    delivery_instructions: '',
+    dispatch_date: '',
+    delivery_time: '',
+    phone_number: '',
+  })
 
   useEffect(() => {
     const getUser = async () => {
@@ -92,6 +104,123 @@ export default function ProfilePage() {
       .single()
 
     setCheckoutPreferences(data || null)
+  }
+
+  const fetchOrderInfoEntries = async (userId: string) => {
+    const { data } = await supabase
+      .from('user_order_info')
+      .select('*')
+      .eq('user_id', userId)
+      .order('is_default', { ascending: false })
+      .order('created_at', { ascending: false })
+
+    setOrderInfoEntries(data || [])
+  }
+
+  const handleSaveOrderInfo = async () => {
+    if (!user) return
+
+    if (!orderInfoForm.email_for_order_confirmation.trim() || !orderInfoForm.customer_reference.trim()) {
+      alert('Please fill in all required fields')
+      return
+    }
+
+    try {
+      if (editingOrderInfo) {
+        await supabase
+          .from('user_order_info')
+          .update({
+            label: orderInfoForm.label,
+            email_for_order_confirmation: orderInfoForm.email_for_order_confirmation,
+            customer_reference: orderInfoForm.customer_reference,
+            delivery_instructions: orderInfoForm.delivery_instructions,
+            dispatch_date: orderInfoForm.dispatch_date || null,
+            delivery_time: orderInfoForm.delivery_time,
+            phone_number: orderInfoForm.phone_number,
+          })
+          .eq('id', editingOrderInfo)
+      } else {
+        const { data: existingOrderInfo } = await supabase
+          .from('user_order_info')
+          .select('*')
+          .eq('user_id', user.id)
+        
+        await supabase.from('user_order_info').insert({
+          user_id: user.id,
+          label: orderInfoForm.label,
+          email_for_order_confirmation: orderInfoForm.email_for_order_confirmation,
+          customer_reference: orderInfoForm.customer_reference,
+          delivery_instructions: orderInfoForm.delivery_instructions,
+          dispatch_date: orderInfoForm.dispatch_date || null,
+          delivery_time: orderInfoForm.delivery_time,
+          phone_number: orderInfoForm.phone_number,
+          is_default: (existingOrderInfo?.length || 0) === 0,
+        })
+      }
+
+      await fetchOrderInfoEntries(user.id)
+      setEditingOrderInfo(null)
+      setShowAddOrderInfo(false)
+      setOrderInfoForm({
+        label: 'Default',
+        email_for_order_confirmation: '',
+        customer_reference: '',
+        delivery_instructions: '',
+        dispatch_date: '',
+        delivery_time: '',
+        phone_number: '',
+      })
+    } catch (error) {
+      console.error('Error saving order info:', error)
+      alert('Failed to save order information')
+    }
+  }
+
+  const handleDeleteOrderInfo = async (orderInfoId: string) => {
+    if (!confirm('Are you sure you want to delete this order information?')) return
+
+    try {
+      await supabase.from('user_order_info').delete().eq('id', orderInfoId)
+      await fetchOrderInfoEntries(user!.id)
+    } catch (error) {
+      console.error('Error deleting order info:', error)
+      alert('Failed to delete order information')
+    }
+  }
+
+  const handleSetDefaultOrderInfo = async (orderInfoId: string) => {
+    try {
+      // First, unset all defaults
+      await supabase
+        .from('user_order_info')
+        .update({ is_default: false })
+        .eq('user_id', user!.id)
+      
+      // Then set the selected one as default
+      await supabase
+        .from('user_order_info')
+        .update({ is_default: true })
+        .eq('id', orderInfoId)
+      
+      await fetchOrderInfoEntries(user!.id)
+    } catch (error) {
+      console.error('Error setting default order info:', error)
+      alert('Failed to set default order information')
+    }
+  }
+
+  const startEditOrderInfo = (orderInfo: any) => {
+    setEditingOrderInfo(orderInfo.id)
+    setOrderInfoForm({
+      label: orderInfo.label || 'Default',
+      email_for_order_confirmation: orderInfo.email_for_order_confirmation || '',
+      customer_reference: orderInfo.customer_reference || '',
+      delivery_instructions: orderInfo.delivery_instructions || '',
+      dispatch_date: orderInfo.dispatch_date || '',
+      delivery_time: orderInfo.delivery_time || '',
+      phone_number: orderInfo.phone_number || '',
+    })
+    setShowAddOrderInfo(true)
   }
 
   const handleSaveAddress = async () => {
@@ -483,81 +612,195 @@ export default function ProfilePage() {
                 )}
               </div>
 
-              {/* Saved Checkout Preferences */}
-              {checkoutPreferences && (checkoutPreferences.delivery_customer || checkoutPreferences.email_for_order_confirmation) && (
-                <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200 mb-6">
-                  <h2 className="text-xl font-semibold text-gray-900 mb-5 flex items-center gap-2">
+              {/* Order Information Management */}
+              <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200 mb-6">
+                <div className="flex justify-between items-center mb-5">
+                  <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
                     <svg className="w-5 h-5 text-gray-600" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
                       <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
-                    Saved Checkout Information
+                    {t.checkout.orderInformation}
                   </h2>
-
-                  {/* Delivery Information */}
-                  {(checkoutPreferences.delivery_customer || checkoutPreferences.delivery_address || checkoutPreferences.delivery_postal_code) && (
-                    <div className="mb-5 p-4 bg-nature-green-50 rounded-lg border border-nature-green-200">
-                      <h3 className="text-sm font-semibold text-nature-green-700 mb-3 uppercase tracking-wide">
-                        {t.checkout.deliveryInformation}
-                      </h3>
-                      {checkoutPreferences.delivery_type && (
-                        <p className="text-sm text-gray-700 mb-2">
-                          <span className="font-medium">{t.checkout.deliveryType}:</span> {checkoutPreferences.delivery_type}
-                        </p>
-                      )}
-                      {checkoutPreferences.delivery_customer && (
-                        <p className="text-sm text-gray-900 font-medium mb-1">{checkoutPreferences.delivery_customer}</p>
-                      )}
-                      {checkoutPreferences.delivery_address && (
-                        <p className="text-sm text-gray-900 mb-1">{checkoutPreferences.delivery_address}</p>
-                      )}
-                      {(checkoutPreferences.delivery_postal_code || checkoutPreferences.delivery_postal_place) && (
-                        <p className="text-sm text-gray-900">
-                          {checkoutPreferences.delivery_postal_code} {checkoutPreferences.delivery_postal_place}
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Order Information */}
-                  {(checkoutPreferences.email_for_order_confirmation || checkoutPreferences.customer_reference || checkoutPreferences.delivery_instructions || checkoutPreferences.delivery_time || checkoutPreferences.phone_number || checkoutPreferences.dispatch_date) && (
-                    <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                      <h3 className="text-sm font-semibold text-blue-700 mb-3 uppercase tracking-wide">
-                        {t.checkout.orderInformation}
-                      </h3>
-                      {checkoutPreferences.email_for_order_confirmation && (
-                        <p className="text-sm text-gray-700 mb-1">
-                          <span className="font-medium">{t.checkout.emailForOrderConfirmation}:</span> {checkoutPreferences.email_for_order_confirmation}
-                        </p>
-                      )}
-                      {checkoutPreferences.phone_number && (
-                        <p className="text-sm text-gray-700 mb-1">
-                          <span className="font-medium">{t.checkout.phoneNumber}:</span> {checkoutPreferences.phone_number}
-                        </p>
-                      )}
-                      {checkoutPreferences.customer_reference && (
-                        <p className="text-sm text-gray-700 mb-1">
-                          <span className="font-medium">{t.checkout.customerReference}:</span> {checkoutPreferences.customer_reference}
-                        </p>
-                      )}
-                      {checkoutPreferences.dispatch_date && (
-                        <p className="text-sm text-gray-700 mb-1">
-                          <span className="font-medium">{t.checkout.dispatchDate}:</span> {new Date(checkoutPreferences.dispatch_date).toLocaleDateString()}
-                        </p>
-                      )}
-                      {checkoutPreferences.delivery_time && (
-                        <p className="text-sm text-gray-700 mb-1">
-                          <span className="font-medium">{t.checkout.deliveryTime}:</span> {checkoutPreferences.delivery_time}
-                        </p>
-                      )}
-                      {checkoutPreferences.delivery_instructions && (
-                        <p className="text-sm text-gray-700">
-                          <span className="font-medium">{t.checkout.deliveryInstructions}:</span> {checkoutPreferences.delivery_instructions}
-                        </p>
-                      )}
-                    </div>
-                  )}
+                  <button
+                    onClick={() => {
+                      setShowAddOrderInfo(!showAddOrderInfo)
+                      setEditingOrderInfo(null)
+                      setOrderInfoForm({
+                        label: 'Default',
+                        email_for_order_confirmation: '',
+                        customer_reference: '',
+                        delivery_instructions: '',
+                        dispatch_date: '',
+                        delivery_time: '',
+                        phone_number: '',
+                      })
+                    }}
+                    className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors text-sm shadow-md hover:shadow-lg"
+                  >
+                    {showAddOrderInfo ? t.common.cancel : `+ ${t.common.add} Order Info`}
+                  </button>
                 </div>
-              )}
+
+                {showAddOrderInfo && (
+                  <div className="mb-5 p-5 bg-gray-50 rounded-lg border border-gray-200">
+                    <h3 className="text-base font-semibold text-gray-900 mb-4">
+                      {editingOrderInfo ? `${t.common.edit} Order Information` : `${t.common.add} Order Information`}
+                    </h3>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-2 uppercase tracking-wide">Label</label>
+                        <input
+                          type="text"
+                          value={orderInfoForm.label}
+                          onChange={(e) => setOrderInfoForm({ ...orderInfoForm, label: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm"
+                          placeholder="Default"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-2 uppercase tracking-wide">{t.checkout.emailForOrderConfirmation} *</label>
+                        <input
+                          type="email"
+                          value={orderInfoForm.email_for_order_confirmation}
+                          onChange={(e) => setOrderInfoForm({ ...orderInfoForm, email_for_order_confirmation: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm"
+                          placeholder="email@example.com"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-2 uppercase tracking-wide">{t.checkout.customerReference} *</label>
+                        <input
+                          type="text"
+                          value={orderInfoForm.customer_reference}
+                          onChange={(e) => setOrderInfoForm({ ...orderInfoForm, customer_reference: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-2 uppercase tracking-wide">{t.checkout.phoneNumber}</label>
+                        <input
+                          type="tel"
+                          value={orderInfoForm.phone_number}
+                          onChange={(e) => setOrderInfoForm({ ...orderInfoForm, phone_number: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm"
+                          placeholder="+47 123 45 678"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-2 uppercase tracking-wide">{t.checkout.dispatchDate}</label>
+                        <input
+                          type="date"
+                          value={orderInfoForm.dispatch_date}
+                          onChange={(e) => setOrderInfoForm({ ...orderInfoForm, dispatch_date: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-2 uppercase tracking-wide">{t.checkout.deliveryTime}</label>
+                        <select
+                          value={orderInfoForm.delivery_time}
+                          onChange={(e) => setOrderInfoForm({ ...orderInfoForm, delivery_time: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm"
+                        >
+                          <option value="">Select time</option>
+                          <option value={t.checkout.deliveryTimeMorning}>{t.checkout.deliveryTimeMorning}</option>
+                          <option value={t.checkout.deliveryTimeAfternoon}>{t.checkout.deliveryTimeAfternoon}</option>
+                          <option value={t.checkout.deliveryTimeEvening}>{t.checkout.deliveryTimeEvening}</option>
+                          <option value={t.checkout.deliveryTimeAnytime}>{t.checkout.deliveryTimeAnytime}</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="mt-4">
+                      <label className="block text-xs font-medium text-gray-700 mb-2 uppercase tracking-wide">{t.checkout.deliveryInstructions}</label>
+                      <textarea
+                        value={orderInfoForm.delivery_instructions}
+                        onChange={(e) => setOrderInfoForm({ ...orderInfoForm, delivery_instructions: e.target.value })}
+                        rows={3}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-none text-sm"
+                        placeholder={t.checkout.deliveryInstructions}
+                      />
+                    </div>
+                    <button
+                      onClick={handleSaveOrderInfo}
+                      className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors text-sm shadow-md hover:shadow-lg"
+                    >
+                      {editingOrderInfo ? `${t.common.update} Order Information` : `${t.common.save} Order Information`}
+                    </button>
+                  </div>
+                )}
+
+                {orderInfoEntries.length > 0 ? (
+                  <div className="space-y-3">
+                    {orderInfoEntries.map((orderInfo) => (
+                      <div
+                        key={orderInfo.id}
+                        className={`p-4 rounded-lg border transition-all ${
+                          orderInfo.is_default
+                            ? 'bg-blue-50 border-blue-200'
+                            : 'bg-gray-50 border-gray-200'
+                        }`}
+                      >
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h3 className="font-semibold text-gray-900">{orderInfo.label}</h3>
+                              {orderInfo.is_default && (
+                                <span className="px-2 py-0.5 bg-blue-600 text-white text-xs font-medium rounded">
+                                  Default
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm text-gray-700 mb-1">
+                              <span className="font-medium">{t.checkout.emailForOrderConfirmation}:</span> {orderInfo.email_for_order_confirmation}
+                            </p>
+                            {orderInfo.customer_reference && (
+                              <p className="text-sm text-gray-700 mb-1">
+                                <span className="font-medium">{t.checkout.customerReference}:</span> {orderInfo.customer_reference}
+                              </p>
+                            )}
+                            {orderInfo.phone_number && (
+                              <p className="text-sm text-gray-700 mb-1">
+                                <span className="font-medium">{t.checkout.phoneNumber}:</span> {orderInfo.phone_number}
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex gap-2">
+                            {!orderInfo.is_default && (
+                              <button
+                                onClick={() => handleSetDefaultOrderInfo(orderInfo.id)}
+                                className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded transition-colors"
+                              >
+                                Set Default
+                              </button>
+                            )}
+                            <button
+                              onClick={() => startEditOrderInfo(orderInfo)}
+                              className="px-3 py-1 bg-gray-600 hover:bg-gray-700 text-white text-xs font-medium rounded transition-colors"
+                            >
+                              {t.common.edit}
+                            </button>
+                            <button
+                              onClick={() => handleDeleteOrderInfo(orderInfo.id)}
+                              className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded transition-colors"
+                            >
+                              {t.common.delete}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <div className="inline-flex items-center justify-center w-12 h-12 bg-gray-100 rounded-lg mb-3">
+                      <svg className="w-6 h-6 text-gray-400" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+                        <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
+                    <p className="text-sm">No saved order information yet. Add your first order information above!</p>
+                  </div>
+                )}
+              </div>
 
               {/* Saved Addresses */}
               <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">

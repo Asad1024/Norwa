@@ -7,6 +7,7 @@ import { useCartStore } from '@/store/cartStore'
 import Link from 'next/link'
 import { useTranslations } from '@/hooks/useTranslations'
 import { useLanguageStore } from '@/store/languageStore'
+import { useGlobalLoader } from '@/components/GlobalLoader'
 import PhoneInput from 'react-phone-number-input'
 import 'react-phone-number-input/style.css'
 import { isValidPhoneNumber } from 'react-phone-number-input'
@@ -16,6 +17,7 @@ export default function CheckoutPage() {
   const supabase = createClient()
   const { items, clearCart, getTotal } = useCartStore()
   const language = useLanguageStore((state) => state.language)
+  const { showLoader, hideLoader } = useGlobalLoader()
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const t = useTranslations()
@@ -58,29 +60,76 @@ export default function CheckoutPage() {
         return
       }
 
-      // Load saved checkout preferences
-      const { data: preferences } = await supabase
-        .from('user_checkout_preferences')
+      // Load default shipping address
+      const { data: defaultAddress } = await supabase
+        .from('user_addresses')
         .select('*')
         .eq('user_id', user.id)
+        .eq('is_default', true)
         .single()
 
-      if (preferences) {
+      if (defaultAddress && defaultAddress.address) {
+        // Parse address (format: customer\naddress\npostal_code postal_place)
+        const addressLines = defaultAddress.address.split('\n')
+        if (addressLines.length >= 3) {
+          const postalParts = addressLines[2].split(' ')
+          const postalCode = postalParts[0]
+          const postalPlace = postalParts.slice(1).join(' ')
+          
+          setFormData(prev => ({
+            ...prev,
+            delivery_customer: addressLines[0] || prev.delivery_customer,
+            delivery_address: addressLines[1] || prev.delivery_address,
+            delivery_postal_code: postalCode || prev.delivery_postal_code,
+            delivery_postal_place: postalPlace || prev.delivery_postal_place,
+            phone_number: defaultAddress.phone_number || prev.phone_number,
+          }))
+        }
+      }
+
+      // Load default order info
+      const { data: defaultOrderInfo } = await supabase
+        .from('user_order_info')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('is_default', true)
+        .single()
+
+      if (defaultOrderInfo) {
         setFormData(prev => ({
           ...prev,
-          delivery_customer: preferences.delivery_customer || prev.delivery_customer,
-          delivery_address: preferences.delivery_address || prev.delivery_address,
-          delivery_postal_code: preferences.delivery_postal_code || prev.delivery_postal_code,
-          delivery_postal_place: preferences.delivery_postal_place || prev.delivery_postal_place,
-          delivery_type: preferences.delivery_type || prev.delivery_type || t.checkout.deliveryTypeReadyPack,
-          email_for_order_confirmation: preferences.email_for_order_confirmation || prev.email_for_order_confirmation,
-          customer_reference: preferences.customer_reference || prev.customer_reference,
-          delivery_instructions: preferences.delivery_instructions || prev.delivery_instructions,
-          dispatch_date: preferences.dispatch_date || prev.dispatch_date,
-          delivery_time: preferences.delivery_time || prev.delivery_time,
-          phone_number: preferences.phone_number || prev.phone_number,
+          email_for_order_confirmation: defaultOrderInfo.email_for_order_confirmation || prev.email_for_order_confirmation,
+          customer_reference: defaultOrderInfo.customer_reference || prev.customer_reference,
+          delivery_instructions: defaultOrderInfo.delivery_instructions || prev.delivery_instructions,
+          dispatch_date: defaultOrderInfo.dispatch_date || prev.dispatch_date,
+          delivery_time: defaultOrderInfo.delivery_time || prev.delivery_time,
+          phone_number: defaultOrderInfo.phone_number || prev.phone_number || defaultAddress?.phone_number || prev.phone_number,
         }))
-      } else if (!formData.delivery_type) {
+      }
+
+      // Fallback: Load old checkout preferences if no default order info exists
+      if (!defaultOrderInfo) {
+        const { data: preferences } = await supabase
+          .from('user_checkout_preferences')
+          .select('*')
+          .eq('user_id', user.id)
+          .single()
+
+        if (preferences) {
+          setFormData(prev => ({
+            ...prev,
+            email_for_order_confirmation: preferences.email_for_order_confirmation || prev.email_for_order_confirmation,
+            customer_reference: preferences.customer_reference || prev.customer_reference,
+            delivery_instructions: preferences.delivery_instructions || prev.delivery_instructions,
+            dispatch_date: preferences.dispatch_date || prev.dispatch_date,
+            delivery_time: preferences.delivery_time || prev.delivery_time,
+            phone_number: preferences.phone_number || prev.phone_number,
+          }))
+        }
+      }
+
+      // Set default delivery type if not set
+      if (!formData.delivery_type) {
         setFormData(prev => ({
           ...prev,
           delivery_type: t.checkout.deliveryTypeReadyPack,
@@ -163,6 +212,7 @@ export default function CheckoutPage() {
     if (!user || items.length === 0) return
 
     setLoading(true)
+    showLoader(t.checkout.placingOrder || 'Placing your order...')
     try {
       // Create order with shipping information (including 25% tax)
       // Combine delivery information into shipping_address for backward compatibility
@@ -175,62 +225,47 @@ export default function CheckoutPage() {
           .select('*')
           .eq('user_id', user.id)
         
-        // Check if a "Home" address already exists
-        const existingHomeAddress = existingAddresses?.find(addr => addr.label === 'Home')
+        const hasDefault = existingAddresses?.some(addr => addr.is_default) || false
         
         const addressData: any = {
           label: 'Home',
           address: fullShippingAddress,
           phone_number: formData.phone_number || '',
-          is_default: (existingAddresses?.length || 0) === 0,
+          is_default: !hasDefault, // Set as default only if no default exists
         }
         
-        if (existingHomeAddress) {
-          // Update existing "Home" address instead of creating duplicate
-          await supabase
-            .from('user_addresses')
-            .update(addressData)
-            .eq('id', existingHomeAddress.id)
-        } else {
-          // Insert new address only if "Home" doesn't exist
-          await supabase.from('user_addresses').insert({
-            ...addressData,
-            user_id: user.id,
-          })
-        }
+        // Insert new address
+        await supabase.from('user_addresses').insert({
+          ...addressData,
+          user_id: user.id,
+        })
       }
 
-      // Save checkout preferences (delivery and order info) if user checked save options
-      if (formData.save_delivery_info || formData.save_order_info) {
-        const preferencesData: any = {}
+      // Save order info if user checked "save order info"
+      if (formData.save_order_info) {
+        const { data: existingOrderInfo } = await supabase
+          .from('user_order_info')
+          .select('*')
+          .eq('user_id', user.id)
         
-        if (formData.save_delivery_info) {
-          preferencesData.delivery_customer = formData.delivery_customer || null
-          preferencesData.delivery_address = formData.delivery_address || null
-          preferencesData.delivery_postal_code = formData.delivery_postal_code || null
-          preferencesData.delivery_postal_place = formData.delivery_postal_place || null
-          preferencesData.delivery_type = formData.delivery_type || null
+        const hasDefault = existingOrderInfo?.some(info => info.is_default) || false
+        
+        const orderInfoData: any = {
+          label: 'Default',
+          email_for_order_confirmation: formData.email_for_order_confirmation || null,
+          customer_reference: formData.customer_reference || null,
+          delivery_instructions: formData.delivery_instructions || null,
+          dispatch_date: formData.dispatch_date || null,
+          delivery_time: formData.delivery_time || null,
+          phone_number: formData.phone_number || null,
+          is_default: !hasDefault, // Set as default only if no default exists
         }
         
-        if (formData.save_order_info) {
-          preferencesData.email_for_order_confirmation = formData.email_for_order_confirmation || null
-          preferencesData.customer_reference = formData.customer_reference || null
-          preferencesData.delivery_instructions = formData.delivery_instructions || null
-          preferencesData.dispatch_date = formData.dispatch_date || null
-          preferencesData.delivery_time = formData.delivery_time || null
-          preferencesData.phone_number = formData.phone_number || null
-        }
-
-        // Upsert preferences (update if exists, insert if not)
-        await supabase
-          .from('user_checkout_preferences')
-          .upsert({
-            user_id: user.id,
-            ...preferencesData,
-            updated_at: new Date().toISOString(),
-          }, {
-            onConflict: 'user_id'
-          })
+        // Insert new order info
+        await supabase.from('user_order_info').insert({
+          ...orderInfoData,
+          user_id: user.id,
+        })
       }
 
       const { data: order, error: orderError } = await supabase
