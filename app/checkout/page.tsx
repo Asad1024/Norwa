@@ -100,7 +100,10 @@ export default function CheckoutPage() {
 
     // Phone number validation (optional field) - using react-phone-number-input validation
     if (formData.phone_number && formData.phone_number.trim() !== '') {
-      if (!isValidPhoneNumber(formData.phone_number)) {
+      // Check length first (max 20 characters including country code)
+      if (formData.phone_number.length > 20) {
+        newErrors.phone_number = t.checkout.phoneInvalid || 'Phone number is too long'
+      } else if (!isValidPhoneNumber(formData.phone_number)) {
         newErrors.phone_number = t.checkout.phoneInvalid || 'Please enter a valid phone number'
       }
     }
@@ -474,6 +477,10 @@ export default function CheckoutPage() {
                           defaultCountry="NO"
                           value={formData.phone_number}
                           onChange={(value) => {
+                            // Limit phone number length (max 15 digits after country code)
+                            if (value && value.length > 20) {
+                              return // Prevent input if too long
+                            }
                             setFormData({ ...formData, phone_number: value || '' })
                             if (errors.phone_number) {
                               setErrors({ ...errors, phone_number: '' })
@@ -481,9 +488,10 @@ export default function CheckoutPage() {
                           }}
                           className="w-full"
                           numberInputProps={{
-                            className: `w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                            className: `phone-number-input px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
                               errors.phone_number ? 'border-red-300' : 'border-blue-200'
                             }`,
+                            maxLength: 20,
                           }}
                           placeholder={t.checkout.phoneNumber}
                         />
