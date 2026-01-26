@@ -107,14 +107,24 @@ export default function ProfilePage() {
   }
 
   const fetchOrderInfoEntries = async (userId: string) => {
-    const { data } = await supabase
-      .from('user_order_info')
-      .select('*')
-      .eq('user_id', userId)
-      .order('is_default', { ascending: false })
-      .order('created_at', { ascending: false })
+    try {
+      const { data, error } = await supabase
+        .from('user_order_info')
+        .select('*')
+        .eq('user_id', userId)
+        .order('is_default', { ascending: false })
+        .order('created_at', { ascending: false })
 
-    setOrderInfoEntries(data || [])
+      if (error) {
+        console.error('Error fetching order info entries:', error)
+        setOrderInfoEntries([])
+      } else {
+        setOrderInfoEntries(data || [])
+      }
+    } catch (error) {
+      console.error('Error fetching order info entries:', error)
+      setOrderInfoEntries([])
+    }
   }
 
   const handleSaveOrderInfo = async () => {
