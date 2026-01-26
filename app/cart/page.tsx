@@ -38,6 +38,11 @@ export default function CartPage() {
         router.push('/login')
         return
       }
+      
+      // Fetch shipping charge
+      const charge = await getShippingCharge()
+      setShippingCharge(charge)
+      
       hideLoader()
       setLoading(false)
     }
