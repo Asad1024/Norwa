@@ -304,12 +304,29 @@ export default function ProfilePage() {
   const startEdit = (address: Address) => {
     setEditingAddress(address.id)
     // Parse address format: customer\naddress\npostal_code postal_place
-    const addressLines = address.address.split('\n')
-    const customer = addressLines[0] || ''
-    const addressText = addressLines[1] || ''
-    const postalParts = addressLines[2]?.split(' ') || []
-    const postalCode = postalParts[0] || ''
-    const postalPlace = postalParts.slice(1).join(' ') || ''
+    // Handle both new format (with customer/postal) and old format (just address)
+    const addressLines = address.address ? address.address.split('\n') : []
+    
+    let customer = ''
+    let addressText = ''
+    let postalCode = ''
+    let postalPlace = ''
+    
+    if (addressLines.length >= 3) {
+      // New format: customer\naddress\npostal_code postal_place
+      customer = addressLines[0]?.trim() || ''
+      addressText = addressLines[1]?.trim() || ''
+      const postalParts = addressLines[2]?.trim().split(/\s+/) || []
+      postalCode = postalParts[0] || ''
+      postalPlace = postalParts.slice(1).join(' ') || ''
+    } else if (addressLines.length === 1) {
+      // Old format: just address
+      addressText = addressLines[0]?.trim() || ''
+    } else if (addressLines.length === 2) {
+      // Partial format: customer\naddress or address\npostal
+      customer = addressLines[0]?.trim() || ''
+      addressText = addressLines[1]?.trim() || ''
+    }
     
     setAddressForm({
       label: address.label || 'Home',
@@ -865,6 +882,16 @@ export default function ProfilePage() {
                           placeholder="Home"
                         />
                       </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-2 uppercase tracking-wide">{t.checkout.customer} *</label>
+                        <input
+                          type="text"
+                          value={addressForm.customer}
+                          onChange={(e) => setAddressForm({ ...addressForm, customer: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-nature-green-500 focus:border-nature-green-500 transition-all text-sm"
+                          placeholder={t.checkout.customer}
+                        />
+                      </div>
                     </div>
                     <div className="mt-4">
                       <label className="block text-xs font-medium text-gray-700 mb-2 uppercase tracking-wide">{t.common.address} *</label>
@@ -873,8 +900,30 @@ export default function ProfilePage() {
                         onChange={(e) => setAddressForm({ ...addressForm, address: e.target.value })}
                         rows={3}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-nature-green-500 focus:border-nature-green-500 transition-all resize-none text-sm"
-                        placeholder="Enter your full address"
+                        placeholder={t.checkout.address}
                       />
+                    </div>
+                    <div className="mt-4 grid md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-2 uppercase tracking-wide">{t.checkout.postalCode} *</label>
+                        <input
+                          type="text"
+                          value={addressForm.postal_code}
+                          onChange={(e) => setAddressForm({ ...addressForm, postal_code: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-nature-green-500 focus:border-nature-green-500 transition-all text-sm"
+                          placeholder={t.checkout.postalCode}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-2 uppercase tracking-wide">{t.checkout.postalPlace} *</label>
+                        <input
+                          type="text"
+                          value={addressForm.postal_place}
+                          onChange={(e) => setAddressForm({ ...addressForm, postal_place: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-nature-green-500 focus:border-nature-green-500 transition-all text-sm"
+                          placeholder={t.checkout.postalPlace}
+                        />
+                      </div>
                     </div>
                     <button
                       onClick={handleSaveAddress}

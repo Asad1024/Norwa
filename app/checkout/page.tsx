@@ -70,12 +70,20 @@ export default function CheckoutPage() {
         .maybeSingle()
 
       if (!addressError && defaultAddress && defaultAddress.address) {
-        // Profile addresses only have address and phone_number
-        // Only populate the delivery_address field, nothing else
+        // Parse address format: customer\naddress\npostal_code postal_place
+        const addressLines = defaultAddress.address.split('\n')
+        const customer = addressLines[0]?.trim() || ''
+        const addressText = addressLines[1]?.trim() || ''
+        const postalParts = addressLines[2]?.trim().split(/\s+/) || []
+        const postalCode = postalParts[0] || ''
+        const postalPlace = postalParts.slice(1).join(' ') || ''
+        
         setFormData(prev => ({
           ...prev,
-          delivery_address: defaultAddress.address.trim() || prev.delivery_address,
-          phone_number: defaultAddress.phone_number || prev.phone_number,
+          delivery_customer: customer || prev.delivery_customer,
+          delivery_address: addressText || prev.delivery_address,
+          delivery_postal_code: postalCode || prev.delivery_postal_code,
+          delivery_postal_place: postalPlace || prev.delivery_postal_place,
         }))
       }
 
