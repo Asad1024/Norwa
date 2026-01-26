@@ -76,6 +76,18 @@ export default function CheckoutPage() {
           label: defaultAddress.label || 'Home',
           shipping_address: defaultAddress.address,
           phone_number: defaultAddress.phone_number,
+          delivery_customer: '',
+          delivery_address: '',
+          delivery_postal_code: '',
+          delivery_postal_place: '',
+          delivery_type: 'Ferdigpakk (gebyr)',
+          billing_address: '',
+          billing_customer: '',
+          billing_postal_code: '',
+          billing_postal_place: '',
+          payment_method: 'Faktura',
+          note: '',
+          delivery_time: '',
         })
       }
     }
@@ -88,6 +100,18 @@ export default function CheckoutPage() {
         label: 'Home',
         shipping_address: '',
         phone_number: '',
+        delivery_customer: '',
+        delivery_address: '',
+        delivery_postal_code: '',
+        delivery_postal_place: '',
+        delivery_type: 'Ferdigpakk (gebyr)',
+        billing_address: '',
+        billing_customer: '',
+        billing_postal_code: '',
+        billing_postal_place: '',
+        payment_method: 'Faktura',
+        note: '',
+        delivery_time: '',
       })
       setSaveAddress(true)
     } else {
@@ -97,6 +121,18 @@ export default function CheckoutPage() {
           label: address.label || 'Home',
           shipping_address: address.address,
           phone_number: address.phone_number,
+          delivery_customer: '',
+          delivery_address: '',
+          delivery_postal_code: '',
+          delivery_postal_place: '',
+          delivery_type: 'Ferdigpakk (gebyr)',
+          billing_address: '',
+          billing_customer: '',
+          billing_postal_code: '',
+          billing_postal_place: '',
+          payment_method: 'Faktura',
+          note: '',
+          delivery_time: '',
         })
         setSaveAddress(false) // Don't save again if using existing address
       }
