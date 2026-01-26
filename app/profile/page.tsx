@@ -119,6 +119,7 @@ export default function ProfilePage() {
         console.error('Error fetching order info entries:', error)
         setOrderInfoEntries([])
       } else {
+        console.log('Fetched order info entries:', data)
         setOrderInfoEntries(data || [])
       }
     } catch (error) {

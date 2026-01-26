@@ -69,29 +69,13 @@ export default function CheckoutPage() {
         .maybeSingle()
 
       if (!addressError && defaultAddress && defaultAddress.address) {
-        // Parse address (format: customer\naddress\npostal_code postal_place)
-        const addressLines = defaultAddress.address.split('\n')
-        if (addressLines.length >= 3) {
-          const postalParts = addressLines[2].trim().split(/\s+/)
-          const postalCode = postalParts[0] || ''
-          const postalPlace = postalParts.slice(1).join(' ') || ''
-          
-          setFormData(prev => ({
-            ...prev,
-            delivery_customer: addressLines[0]?.trim() || prev.delivery_customer,
-            delivery_address: addressLines[1]?.trim() || prev.delivery_address,
-            delivery_postal_code: postalCode || prev.delivery_postal_code,
-            delivery_postal_place: postalPlace || prev.delivery_postal_place,
-            phone_number: defaultAddress.phone_number || prev.phone_number,
-          }))
-        } else if (addressLines.length === 1) {
-          // Handle case where address is stored as single line
-          setFormData(prev => ({
-            ...prev,
-            delivery_address: addressLines[0]?.trim() || prev.delivery_address,
-            phone_number: defaultAddress.phone_number || prev.phone_number,
-          }))
-        }
+        // Profile addresses only have address and phone_number
+        // Only populate the delivery_address field, nothing else
+        setFormData(prev => ({
+          ...prev,
+          delivery_address: defaultAddress.address.trim() || prev.delivery_address,
+          phone_number: defaultAddress.phone_number || prev.phone_number,
+        }))
       }
 
       // Load default order info - ONLY if it exists in user_order_info table (shown in profile)
