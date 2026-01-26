@@ -7,7 +7,7 @@ import Link from 'next/link'
 import { useGlobalLoader } from '@/components/GlobalLoader'
 import { useTranslations } from '@/hooks/useTranslations'
 import NavLink from '@/components/NavLink'
-import { Package, ShoppingCart, FolderOpen, Clock, Plus, Users, ClipboardList, ArrowRight, Shield, ShieldOff, CheckCircle, XCircle, Trash2, Menu, FileText } from 'lucide-react'
+import { Package, ShoppingCart, FolderOpen, Clock, Plus, Users, ClipboardList, ArrowRight, Shield, ShieldOff, CheckCircle, XCircle, Trash2, Menu, FileText, Truck } from 'lucide-react'
 
 export default function AdminDashboard() {
   const router = useRouter()
@@ -478,6 +478,18 @@ export default function AdminDashboard() {
               </div>
               <div>
                 <p className="font-medium text-gray-900 text-sm">{t.admin.allOrders}</p>
+              </div>
+            </Link>
+            <Link
+              href="/admin/shipping"
+              onClick={() => showLoader(t.loader.loading)}
+              className="flex items-center gap-3 p-4 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 hover:border-gray-300 transition-all"
+            >
+              <div className="w-9 h-9 bg-indigo-600 rounded-md flex items-center justify-center">
+                <Truck className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <p className="font-medium text-gray-900 text-sm">Manage Shipping</p>
               </div>
             </Link>
           </div>

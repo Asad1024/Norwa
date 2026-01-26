@@ -8,6 +8,7 @@ import Link from 'next/link'
 import { useTranslations } from '@/hooks/useTranslations'
 import { useLanguageStore } from '@/store/languageStore'
 import { useGlobalLoader } from '@/components/GlobalLoader'
+import { getShippingCharge } from '@/lib/shipping'
 import PhoneInput from 'react-phone-number-input'
 import 'react-phone-number-input/style.css'
 import { isValidPhoneNumber } from 'react-phone-number-input'
@@ -20,6 +21,7 @@ export default function CheckoutPage() {
   const { showLoader, hideLoader } = useGlobalLoader()
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(false)
+  const [shippingCharge, setShippingCharge] = useState<number>(0)
   const t = useTranslations()
   const [formData, setFormData] = useState({
     shipping_address: '',
@@ -133,6 +135,11 @@ export default function CheckoutPage() {
       }
 
       setUser(user)
+      
+      // Fetch shipping charge
+      const charge = await getShippingCharge()
+      setShippingCharge(charge)
+      
       hideLoader()
     }
 
@@ -252,7 +259,7 @@ export default function CheckoutPage() {
         .from('orders')
         .insert({
           user_id: user.id,
-          total: getTotal() * 1.25, // Include 25% tax
+          total: (getTotal() + shippingCharge) * 1.25, // Include shipping and 25% tax
           status: 'pending',
           shipping_address: fullShippingAddress,
           phone_number: formData.phone_number || '',
@@ -373,11 +380,13 @@ export default function CheckoutPage() {
                 </div>
                 <div className="flex justify-between text-sm text-gray-600">
                   <span>{t.common.shipping}</span>
-                  <span className="font-medium text-nature-green-600">{t.common.free}</span>
+                  <span className={`font-medium ${shippingCharge === 0 ? 'text-nature-green-600' : 'text-gray-900'}`}>
+                    {shippingCharge === 0 ? t.common.free : `kr ${shippingCharge.toFixed(2)}`}
+                  </span>
                 </div>
                 <div className="flex justify-between text-sm text-gray-600">
                   <span>Tax (25%)</span>
-                  <span className="font-medium text-gray-900">kr {(getTotal() * 0.25).toFixed(2)}</span>
+                  <span className="font-medium text-gray-900">kr {((getTotal() + shippingCharge) * 0.25).toFixed(2)}</span>
                 </div>
               </div>
               <div className="flex justify-between items-center pt-4 border-t-2 border-nature-green-200">
@@ -385,7 +394,7 @@ export default function CheckoutPage() {
                   {t.common.total}:
                 </span>
                 <span className="text-3xl font-extrabold bg-gradient-to-r from-nature-blue-600 to-nature-green-600 bg-clip-text text-transparent">
-                  kr {(getTotal() * 1.25).toFixed(2)}
+                  kr {((getTotal() + shippingCharge) * 1.25).toFixed(2)}
                 </span>
               </div>
             </div>

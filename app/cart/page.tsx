@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/components/ToastProvider'
 import { useGlobalLoader } from '@/components/GlobalLoader'
 import { useTranslations } from '@/hooks/useTranslations'
+import { getShippingCharge } from '@/lib/shipping'
 import ProductImage from '@/components/ProductImage'
 
 export default function CartPage() {
@@ -21,6 +22,7 @@ export default function CartPage() {
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
   const [user, setUser] = useState<any>(null)
+  const [shippingCharge, setShippingCharge] = useState<number>(0)
   const { showToast } = useToast()
   const t = useTranslations()
 
@@ -247,17 +249,19 @@ export default function CartPage() {
                 </div>
                 <div className="flex justify-between text-sm text-gray-600">
                   <span>{t.common.shipping}</span>
-                  <span className="font-medium text-nature-green-600">{t.common.free}</span>
+                  <span className={`font-medium ${shippingCharge === 0 ? 'text-nature-green-600' : 'text-gray-900'}`}>
+                    {shippingCharge === 0 ? t.common.free : `kr ${shippingCharge.toFixed(2)}`}
+                  </span>
                 </div>
                 <div className="flex justify-between text-sm text-gray-600">
                   <span>Tax (25%)</span>
-                  <span className="font-medium text-gray-900">kr {(getTotal() * 0.25).toFixed(2)}</span>
+                  <span className="font-medium text-gray-900">kr {((getTotal() + shippingCharge) * 0.25).toFixed(2)}</span>
                 </div>
                 <div className="pt-3 border-t border-gray-200">
                   <div className="flex justify-between items-center">
                     <span className="text-base font-semibold text-gray-900">{t.common.total}</span>
                     <span className="text-xl font-semibold text-gray-900">
-                      kr {(getTotal() * 1.25).toFixed(2)}
+                      kr {((getTotal() + shippingCharge) * 1.25).toFixed(2)}
                     </span>
                   </div>
                 </div>
