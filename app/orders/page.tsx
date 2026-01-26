@@ -336,8 +336,6 @@ export default function OrdersPage() {
                                         ? getTranslation(item.products.name_translations, language)
                                         : item.products?.name || 'Product'
                                       const itemSubtotal = item.price * item.quantity
-                                      const itemTax = itemSubtotal * 0.25
-                                      const itemTotal = itemSubtotal + itemTax
                                       return (
                                         <div
                                           key={item.id}
@@ -361,14 +359,11 @@ export default function OrdersPage() {
                                               <p className="text-xs text-gray-500">
                                                 {t.common.quantity}: {item.quantity} × kr {item.price.toFixed(2)}
                                               </p>
-                                              <p className="text-xs text-gray-500">
-                                                Tax (25%): kr {itemTax.toFixed(2)}
-                                              </p>
                                             </div>
                                           </div>
                                           <div className="text-right">
                                             <p className="font-semibold text-gray-900 text-sm">
-                                              kr {itemTotal.toFixed(2)}
+                                              kr {itemSubtotal.toFixed(2)}
                                             </p>
                                           </div>
                                         </div>
