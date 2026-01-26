@@ -341,6 +341,7 @@ export default function CheckoutPage() {
       router.push(`/orders?success=true`)
     } catch (error: any) {
       console.error('Error creating order:', error)
+      hideLoader()
       alert(t.checkout.orderFailed)
     } finally {
       setLoading(false)
