@@ -7,6 +7,9 @@ import { useCartStore } from '@/store/cartStore'
 import Link from 'next/link'
 import { useTranslations } from '@/hooks/useTranslations'
 import { useLanguageStore } from '@/store/languageStore'
+import PhoneInput from 'react-phone-number-input'
+import 'react-phone-number-input/style.css'
+import { isValidPhoneNumber } from 'react-phone-number-input'
 
 export default function CheckoutPage() {
   const router = useRouter()
@@ -84,16 +87,22 @@ export default function CheckoutPage() {
     // Validate order information
     if (!formData.email_for_order_confirmation.trim()) {
       newErrors.email_for_order_confirmation = t.checkout.emailForOrderConfirmation + ' ' + t.common.required.toLowerCase()
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email_for_order_confirmation)) {
-      newErrors.email_for_order_confirmation = 'Invalid email format'
+    } else {
+      // Enhanced email validation
+      const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/
+      if (!emailRegex.test(formData.email_for_order_confirmation.trim())) {
+        newErrors.email_for_order_confirmation = t.checkout.emailInvalid
+      }
     }
     if (!formData.customer_reference.trim()) {
       newErrors.customer_reference = t.checkout.customerReference + ' ' + t.common.required.toLowerCase()
     }
 
-    // Phone number validation (optional field)
-    if (formData.phone_number && !/^\+?[\d\s-()]+$/.test(formData.phone_number)) {
-      newErrors.phone_number = t.checkout.phoneInvalid
+    // Phone number validation (optional field) - using react-phone-number-input validation
+    if (formData.phone_number && formData.phone_number.trim() !== '') {
+      if (!isValidPhoneNumber(formData.phone_number)) {
+        newErrors.phone_number = t.checkout.phoneInvalid || 'Please enter a valid phone number'
+      }
     }
 
     setErrors(newErrors)
@@ -431,16 +440,24 @@ export default function CheckoutPage() {
                         type="email"
                         value={formData.email_for_order_confirmation}
                         onChange={(e) => {
-                          setFormData({ ...formData, email_for_order_confirmation: e.target.value })
+                          setFormData({ ...formData, email_for_order_confirmation: e.target.value.trim() })
                           if (errors.email_for_order_confirmation) {
                             setErrors({ ...errors, email_for_order_confirmation: '' })
+                          }
+                        }}
+                        onBlur={(e) => {
+                          // Validate on blur for better UX
+                          const email = e.target.value.trim()
+                          if (email && !/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/.test(email)) {
+                            setErrors({ ...errors, email_for_order_confirmation: t.checkout.emailInvalid })
                           }
                         }}
                         className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
                           errors.email_for_order_confirmation ? 'border-red-300' : 'border-blue-200'
                         }`}
                         required
-                        placeholder={t.checkout.emailForOrderConfirmation}
+                        placeholder="example@email.com"
+                        pattern="[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*"
                       />
                       {errors.email_for_order_confirmation && (
                         <p className="text-red-600 text-sm mt-1">{errors.email_for_order_confirmation}</p>
@@ -451,14 +468,29 @@ export default function CheckoutPage() {
                       <label htmlFor="phone_number" className="block text-sm font-semibold text-blue-700 mb-2">
                         {t.checkout.phoneNumber}
                       </label>
-                      <input
-                        id="phone_number"
-                        type="tel"
-                        value={formData.phone_number}
-                        onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
-                        className="w-full px-4 py-3 border-2 border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                        placeholder={t.checkout.phoneNumber}
-                      />
+                      <div className={`phone-input-container ${errors.phone_number ? 'phone-input-error' : ''}`}>
+                        <PhoneInput
+                          international
+                          defaultCountry="NO"
+                          value={formData.phone_number}
+                          onChange={(value) => {
+                            setFormData({ ...formData, phone_number: value || '' })
+                            if (errors.phone_number) {
+                              setErrors({ ...errors, phone_number: '' })
+                            }
+                          }}
+                          className="w-full"
+                          numberInputProps={{
+                            className: `w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                              errors.phone_number ? 'border-red-300' : 'border-blue-200'
+                            }`,
+                          }}
+                          placeholder={t.checkout.phoneNumber}
+                        />
+                      </div>
+                      {errors.phone_number && (
+                        <p className="text-red-600 text-sm mt-1">{errors.phone_number}</p>
+                      )}
                     </div>
 
                     <div>

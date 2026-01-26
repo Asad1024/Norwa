@@ -2,6 +2,72 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Phone Input Styling */
+.phone-input-container {
+  width: 100%;
+}
+
+.phone-input-container .PhoneInput {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.phone-input-container .PhoneInputInput {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 2px solid #bfdbfe;
+  border-left: none;
+  border-radius: 0 0.5rem 0.5rem 0;
+  font-size: 1rem;
+  transition: all 0.2s;
+  outline: none;
+}
+
+.phone-input-container .PhoneInputInput:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.phone-input-container .PhoneInputCountry {
+  display: flex;
+  align-items: center;
+  margin-right: 0;
+}
+
+.phone-input-container .PhoneInputCountrySelect {
+  padding: 0.75rem 0.5rem;
+  border: 2px solid #bfdbfe;
+  border-right: none;
+  border-radius: 0.5rem 0 0 0.5rem;
+  background-color: white;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.phone-input-container .PhoneInputCountrySelect:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.phone-input-container.phone-input-error .PhoneInputInput {
+  border-color: #fca5a5;
+}
+
+.phone-input-container.phone-input-error .PhoneInputCountrySelect {
+  border-color: #fca5a5;
+}
+
+.phone-input-container .PhoneInputCountryIcon {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.phone-input-container .PhoneInputCountryIcon--border {
+  border-radius: 0.25rem;
+}
+
 :root {
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 255, 255, 255;

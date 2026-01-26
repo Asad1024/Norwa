@@ -181,6 +181,7 @@ export interface UITranslations {
       deliveryTimeEvening: string
       deliveryTimeAnytime: string
       emailForOrderConfirmation: string
+      emailInvalid: string
       customerReference: string
       deliveryInstructions: string
       dispatchDate: string
@@ -668,6 +669,7 @@ const translations: Record<Language, UITranslations> = {
       deliveryTimeEvening: 'Evening (17:00 - 20:00)',
       deliveryTimeAnytime: 'Anytime',
       emailForOrderConfirmation: 'Email for order confirmation',
+      emailInvalid: 'Please enter a valid email address',
       customerReference: 'Customer reference',
       deliveryInstructions: 'Delivery instructions',
       dispatchDate: 'Dispatch date',
@@ -1153,6 +1155,7 @@ const translations: Record<Language, UITranslations> = {
       deliveryTimeEvening: 'Kveld (17:00 - 20:00)',
       deliveryTimeAnytime: 'Når som helst',
       emailForOrderConfirmation: 'E-POST FOR ORDREBEKREFTELSE',
+      emailInvalid: 'Vennligst oppgi en gyldig e-postadresse',
       customerReference: 'KUNDEREFERANSE',
       deliveryInstructions: 'LEVERINGSANVISNING',
       dispatchDate: 'UTSENDELSESDATO',
