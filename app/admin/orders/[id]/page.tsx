@@ -250,12 +250,13 @@ export default function OrderDetailPage() {
                       <p className="text-gray-900">{order.delivery_type}</p>
                     </div>
                   )}
+                  {/* Show new fields if they exist, otherwise parse from shipping_address - but don't show both */}
                   {order.delivery_customer ? (
                     <div className="mb-3">
                       <p className="text-sm font-semibold text-nature-green-700 mb-1">{t.checkout.customer}</p>
                       <p className="text-gray-900 font-medium">{order.delivery_customer}</p>
                     </div>
-                  ) : order.shipping_address && (
+                  ) : order.shipping_address && order.shipping_address.split('\n')[0] && (
                     <div className="mb-3">
                       <p className="text-sm font-semibold text-nature-green-700 mb-1">{t.checkout.customer}</p>
                       <p className="text-gray-900 font-medium">{order.shipping_address.split('\n')[0]}</p>
@@ -266,7 +267,7 @@ export default function OrderDetailPage() {
                       <p className="text-sm font-semibold text-nature-green-700 mb-1">{t.checkout.address}</p>
                       <p className="text-gray-900">{order.delivery_address}</p>
                     </div>
-                  ) : order.shipping_address && order.shipping_address.split('\n').length > 1 && (
+                  ) : order.shipping_address && order.shipping_address.split('\n').length > 1 && order.shipping_address.split('\n')[1] && (
                     <div className="mb-3">
                       <p className="text-sm font-semibold text-nature-green-700 mb-1">{t.checkout.address}</p>
                       <p className="text-gray-900">{order.shipping_address.split('\n')[1]}</p>
@@ -287,7 +288,7 @@ export default function OrderDetailPage() {
                         </div>
                       )}
                     </div>
-                  ) : order.shipping_address && order.shipping_address.split('\n').length > 2 && (
+                  ) : order.shipping_address && order.shipping_address.split('\n').length > 2 && order.shipping_address.split('\n')[2] && (
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <p className="text-sm font-semibold text-nature-green-700 mb-1">{t.checkout.postalCode}</p>
@@ -299,28 +300,28 @@ export default function OrderDetailPage() {
                       </div>
                     </div>
                   )}
-                  {!order.delivery_customer && !order.delivery_address && !order.delivery_postal_code && order.shipping_address && (
-                    <div className="mb-3">
-                      <p className="text-sm font-semibold text-nature-green-700 mb-1">{t.checkout.shippingAddress}</p>
-                      <p className="text-gray-900 whitespace-pre-line">{order.shipping_address}</p>
-                    </div>
-                  )}
                 </div>
               </div>
             )}
 
             {/* Order Information */}
-            {(order.email_for_order_confirmation || order.customer_reference || order.delivery_instructions || order.delivery_time || order.phone_number || order.dispatch_date || order.periodic_orders) && (
+            {(order.email_for_order_confirmation || order.customer_reference || order.delivery_instructions || order.delivery_time || order.phone_number || order.dispatch_date || order.periodic_orders || orderUser) && (
               <div className="mt-6 pt-6 border-t border-gray-200">
                 <h3 className="text-lg font-bold text-blue-800 mb-3 flex items-center gap-2">
                   <span>📝</span>
                   {t.checkout.orderInformation}
                 </h3>
                 <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                  {order.email_for_order_confirmation && (
+                  {orderUser?.name && (
+                    <div className="mb-3">
+                      <p className="text-sm font-semibold text-blue-700 mb-1">{t.common.name}</p>
+                      <p className="text-gray-900">{orderUser.name}</p>
+                    </div>
+                  )}
+                  {(order.email_for_order_confirmation || orderUser?.email) && (
                     <div className="mb-3">
                       <p className="text-sm font-semibold text-blue-700 mb-1">{t.checkout.emailForOrderConfirmation}</p>
-                      <p className="text-gray-900">{order.email_for_order_confirmation}</p>
+                      <p className="text-gray-900">{order.email_for_order_confirmation || orderUser?.email}</p>
                     </div>
                   )}
                   {order.phone_number && (
@@ -333,12 +334,6 @@ export default function OrderDetailPage() {
                     <div className="mb-3">
                       <p className="text-sm font-semibold text-blue-700 mb-1">{t.checkout.customerReference}</p>
                       <p className="text-gray-900">{order.customer_reference}</p>
-                    </div>
-                  )}
-                  {order.delivery_instructions && (
-                    <div className="mb-3">
-                      <p className="text-sm font-semibold text-blue-700 mb-1">{t.checkout.deliveryInstructions}</p>
-                      <p className="text-gray-900 whitespace-pre-wrap">{order.delivery_instructions}</p>
                     </div>
                   )}
                   <div className="grid grid-cols-2 gap-4 mb-3">
@@ -355,6 +350,12 @@ export default function OrderDetailPage() {
                       </div>
                     )}
                   </div>
+                  {order.delivery_instructions && (
+                    <div className="mb-3">
+                      <p className="text-sm font-semibold text-blue-700 mb-1">{t.checkout.deliveryInstructions}</p>
+                      <p className="text-gray-900 whitespace-pre-wrap">{order.delivery_instructions}</p>
+                    </div>
+                  )}
                   {(order.periodic_orders || order.alternative_delivery_address) && (
                     <div className="flex flex-wrap gap-4">
                       {order.periodic_orders && (

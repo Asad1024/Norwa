@@ -20,6 +20,7 @@ export default function OrdersPage() {
   const [user, setUser] = useState<any>(null)
   const [orders, setOrders] = useState<(Order & { order_items: (OrderItem & { products: any })[] })[]>([])
   const [loading, setLoading] = useState(true)
+  const [orderUsers, setOrderUsers] = useState<Record<string, { name: string; email: string }>>({})
 
   useEffect(() => {
     const fetchData = async () => {
@@ -43,6 +44,15 @@ export default function OrdersPage() {
         .order('created_at', { ascending: false })
 
       setOrders(data || [])
+      
+      // Set current user info for all orders (since all orders belong to the logged-in user)
+      setOrderUsers({
+        [user.id]: {
+          name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+          email: user.email || '',
+        }
+      })
+      
       hideLoader()
       setLoading(false)
     }
@@ -105,38 +115,41 @@ export default function OrdersPage() {
                         <span className="font-medium">{t.checkout.deliveryType}:</span> {order.delivery_type}
                       </p>
                     )}
+                    {/* Show new fields if they exist, otherwise parse from shipping_address */}
                     {order.delivery_customer ? (
                       <p className="text-sm text-gray-900 font-medium mb-1">{order.delivery_customer}</p>
-                    ) : order.shipping_address && (
+                    ) : order.shipping_address && order.shipping_address.split('\n')[0] && (
                       <p className="text-sm text-gray-900 font-medium mb-1">{order.shipping_address.split('\n')[0]}</p>
                     )}
                     {order.delivery_address ? (
                       <p className="text-sm text-gray-900 mb-1">{order.delivery_address}</p>
-                    ) : order.shipping_address && order.shipping_address.split('\n').length > 1 && (
+                    ) : order.shipping_address && order.shipping_address.split('\n').length > 1 && order.shipping_address.split('\n')[1] && (
                       <p className="text-sm text-gray-900 mb-1">{order.shipping_address.split('\n')[1]}</p>
                     )}
                     {(order.delivery_postal_code || order.delivery_postal_place) ? (
                       <p className="text-sm text-gray-900">
                         {order.delivery_postal_code} {order.delivery_postal_place}
                       </p>
-                    ) : order.shipping_address && order.shipping_address.split('\n').length > 2 && (
+                    ) : order.shipping_address && order.shipping_address.split('\n').length > 2 && order.shipping_address.split('\n')[2] && (
                       <p className="text-sm text-gray-900">{order.shipping_address.split('\n')[2]}</p>
-                    )}
-                    {!order.delivery_customer && !order.delivery_address && !order.delivery_postal_code && order.shipping_address && (
-                      <p className="text-sm text-gray-900 whitespace-pre-line">{order.shipping_address}</p>
                     )}
                   </div>
                 )}
 
                 {/* Order Information */}
-                {(order.email_for_order_confirmation || order.customer_reference || order.delivery_instructions || order.delivery_time || order.phone_number || order.dispatch_date || order.periodic_orders) && (
+                {(order.email_for_order_confirmation || order.customer_reference || order.delivery_instructions || order.delivery_time || order.phone_number || order.dispatch_date || order.periodic_orders || orderUsers[order.user_id]) && (
                   <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
                     <p className="text-xs font-medium text-blue-700 mb-2 uppercase tracking-wide font-semibold">
                       {t.checkout.orderInformation}
                     </p>
-                    {order.email_for_order_confirmation && (
+                    {orderUsers[order.user_id]?.name && (
                       <p className="text-sm text-gray-700 mb-1">
-                        <span className="font-medium">{t.checkout.emailForOrderConfirmation}:</span> {order.email_for_order_confirmation}
+                        <span className="font-medium">{t.common.name}:</span> {orderUsers[order.user_id].name}
+                      </p>
+                    )}
+                    {(order.email_for_order_confirmation || orderUsers[order.user_id]?.email) && (
+                      <p className="text-sm text-gray-700 mb-1">
+                        <span className="font-medium">{t.checkout.emailForOrderConfirmation}:</span> {order.email_for_order_confirmation || orderUsers[order.user_id]?.email}
                       </p>
                     )}
                     {order.phone_number && (
@@ -149,24 +162,24 @@ export default function OrdersPage() {
                         <span className="font-medium">{t.checkout.customerReference}:</span> {order.customer_reference}
                       </p>
                     )}
-                    {order.delivery_instructions && (
-                      <p className="text-sm text-gray-700 mb-1">
-                        <span className="font-medium">{t.checkout.deliveryInstructions}:</span> {order.delivery_instructions}
-                      </p>
-                    )}
                     {order.dispatch_date && (
                       <p className="text-sm text-gray-700 mb-1">
                         <span className="font-medium">{t.checkout.dispatchDate}:</span> {new Date(order.dispatch_date).toLocaleDateString()}
                       </p>
                     )}
-                    {order.periodic_orders && (
+                    {order.delivery_time && (
                       <p className="text-sm text-gray-700 mb-1">
-                        <span className="font-medium">{t.checkout.periodicOrders}:</span> {t.common.yes}
+                        <span className="font-medium">{t.checkout.deliveryTime}:</span> {order.delivery_time}
                       </p>
                     )}
-                    {order.delivery_time && (
+                    {order.delivery_instructions && (
+                      <p className="text-sm text-gray-700 mb-1">
+                        <span className="font-medium">{t.checkout.deliveryInstructions}:</span> {order.delivery_instructions}
+                      </p>
+                    )}
+                    {order.periodic_orders && (
                       <p className="text-sm text-gray-700">
-                        <span className="font-medium">{t.checkout.deliveryTime}:</span> {order.delivery_time}
+                        <span className="font-medium">{t.checkout.periodicOrders}:</span> {t.common.yes}
                       </p>
                     )}
                   </div>
