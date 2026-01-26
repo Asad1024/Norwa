@@ -95,7 +95,7 @@ export default function OrdersPage() {
                 </div>
 
                 {/* Delivery Information */}
-                {(order.delivery_customer || order.delivery_address || order.delivery_postal_code) && (
+                {(order.delivery_customer || order.delivery_address || order.delivery_postal_code || order.shipping_address) && (
                   <div className="mb-4 p-3 bg-nature-green-50 rounded-lg border border-nature-green-200">
                     <p className="text-xs font-medium text-nature-green-700 mb-2 uppercase tracking-wide font-semibold">
                       {t.checkout.deliveryInformation}
@@ -105,22 +105,31 @@ export default function OrdersPage() {
                         <span className="font-medium">{t.checkout.deliveryType}:</span> {order.delivery_type}
                       </p>
                     )}
-                    {order.delivery_customer && (
+                    {order.delivery_customer ? (
                       <p className="text-sm text-gray-900 font-medium mb-1">{order.delivery_customer}</p>
+                    ) : order.shipping_address && (
+                      <p className="text-sm text-gray-900 font-medium mb-1">{order.shipping_address.split('\n')[0]}</p>
                     )}
-                    {order.delivery_address && (
+                    {order.delivery_address ? (
                       <p className="text-sm text-gray-900 mb-1">{order.delivery_address}</p>
+                    ) : order.shipping_address && order.shipping_address.split('\n').length > 1 && (
+                      <p className="text-sm text-gray-900 mb-1">{order.shipping_address.split('\n')[1]}</p>
                     )}
-                    {(order.delivery_postal_code || order.delivery_postal_place) && (
+                    {(order.delivery_postal_code || order.delivery_postal_place) ? (
                       <p className="text-sm text-gray-900">
                         {order.delivery_postal_code} {order.delivery_postal_place}
                       </p>
+                    ) : order.shipping_address && order.shipping_address.split('\n').length > 2 && (
+                      <p className="text-sm text-gray-900">{order.shipping_address.split('\n')[2]}</p>
+                    )}
+                    {!order.delivery_customer && !order.delivery_address && !order.delivery_postal_code && order.shipping_address && (
+                      <p className="text-sm text-gray-900 whitespace-pre-line">{order.shipping_address}</p>
                     )}
                   </div>
                 )}
 
                 {/* Order Information */}
-                {(order.email_for_order_confirmation || order.customer_reference || order.delivery_instructions || order.delivery_time) && (
+                {(order.email_for_order_confirmation || order.customer_reference || order.delivery_instructions || order.delivery_time || order.phone_number || order.dispatch_date || order.periodic_orders) && (
                   <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
                     <p className="text-xs font-medium text-blue-700 mb-2 uppercase tracking-wide font-semibold">
                       {t.checkout.orderInformation}
