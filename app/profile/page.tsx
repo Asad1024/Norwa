@@ -42,6 +42,8 @@ export default function ProfilePage() {
   const [orderInfoEntries, setOrderInfoEntries] = useState<any[]>([])
   const [editingOrderInfo, setEditingOrderInfo] = useState<string | null>(null)
   const [showAddOrderInfo, setShowAddOrderInfo] = useState(false)
+  const [savingOrderInfo, setSavingOrderInfo] = useState(false)
+  const [settingDefaultOrderInfo, setSettingDefaultOrderInfo] = useState<string | null>(null)
   const [orderInfoForm, setOrderInfoForm] = useState({
     label: 'Default',
     email_for_order_confirmation: '',
@@ -51,6 +53,8 @@ export default function ProfilePage() {
     delivery_time: '',
     phone_number: '',
   })
+  const [savingAddress, setSavingAddress] = useState(false)
+  const [settingDefaultAddress, setSettingDefaultAddress] = useState<string | null>(null)
 
   useEffect(() => {
     const getUser = async () => {
@@ -139,6 +143,7 @@ export default function ProfilePage() {
       return
     }
 
+    setSavingOrderInfo(true)
     try {
       if (editingOrderInfo) {
         await supabase
@@ -187,6 +192,8 @@ export default function ProfilePage() {
     } catch (error) {
       console.error('Error saving order info:', error)
       alert('Failed to save order information')
+    } finally {
+      setSavingOrderInfo(false)
     }
   }
 
@@ -203,6 +210,7 @@ export default function ProfilePage() {
   }
 
   const handleSetDefaultOrderInfo = async (orderInfoId: string) => {
+    setSettingDefaultOrderInfo(orderInfoId)
     try {
       // First, unset all defaults
       await supabase
@@ -220,6 +228,8 @@ export default function ProfilePage() {
     } catch (error) {
       console.error('Error setting default order info:', error)
       alert('Failed to set default order information')
+    } finally {
+      setSettingDefaultOrderInfo(null)
     }
   }
 
@@ -289,15 +299,26 @@ export default function ProfilePage() {
   }
 
   const handleSetDefault = async (addressId: string) => {
+    setSettingDefaultAddress(addressId)
     try {
+      // First, unset all defaults
+      await supabase
+        .from('user_addresses')
+        .update({ is_default: false })
+        .eq('user_id', user.id)
+      
+      // Then set the selected one as default
       await supabase
         .from('user_addresses')
         .update({ is_default: true })
         .eq('id', addressId)
+      
       await fetchAddresses(user.id)
     } catch (error) {
       console.error('Error setting default address:', error)
       alert('Failed to set default address')
+    } finally {
+      setSettingDefaultAddress(null)
     }
   }
 
@@ -764,9 +785,10 @@ export default function ProfilePage() {
                     </div>
                     <button
                       onClick={handleSaveOrderInfo}
-                      className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors text-sm shadow-md hover:shadow-lg"
+                      disabled={savingOrderInfo}
+                      className="mt-4 w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white font-medium py-2.5 px-4 rounded-lg transition-colors text-sm shadow-md hover:shadow-lg"
                     >
-                      {editingOrderInfo ? `${t.common.update} Order Information` : `${t.common.save} Order Information`}
+                      {savingOrderInfo ? 'Saving...' : (editingOrderInfo ? `${t.common.update} Order Information` : `${t.common.save} Order Information`)}
                     </button>
                   </div>
                 )}
@@ -810,9 +832,10 @@ export default function ProfilePage() {
                             {!orderInfo.is_default && (
                               <button
                                 onClick={() => handleSetDefaultOrderInfo(orderInfo.id)}
-                                className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded transition-colors"
+                                disabled={settingDefaultOrderInfo === orderInfo.id}
+                                className="px-3 py-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white text-xs font-medium rounded transition-colors"
                               >
-                                Set Default
+                                {settingDefaultOrderInfo === orderInfo.id ? 'Setting default...' : 'Set Default'}
                               </button>
                             )}
                             <button
@@ -927,9 +950,10 @@ export default function ProfilePage() {
                     </div>
                     <button
                       onClick={handleSaveAddress}
-                      className="mt-4 w-full bg-nature-green-600 hover:bg-nature-green-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors text-sm shadow-md hover:shadow-lg"
+                      disabled={savingAddress}
+                      className="mt-4 w-full bg-nature-green-600 hover:bg-nature-green-700 disabled:bg-nature-green-400 disabled:cursor-not-allowed text-white font-medium py-2.5 px-4 rounded-lg transition-colors text-sm shadow-md hover:shadow-lg"
                     >
-                      {editingAddress ? `${t.common.update} ${t.common.address}` : `${t.common.save} ${t.common.address}`}
+                      {savingAddress ? 'Saving...' : (editingAddress ? `${t.common.update} ${t.common.address}` : `${t.common.save} ${t.common.address}`)}
                     </button>
                   </div>
                 )}
@@ -961,9 +985,10 @@ export default function ProfilePage() {
                             {!address.is_default && (
                               <button
                                 onClick={() => handleSetDefault(address.id)}
-                                className="px-2.5 py-1 text-xs bg-nature-green-600 hover:bg-nature-green-700 text-white rounded transition-colors font-medium"
+                                disabled={settingDefaultAddress === address.id}
+                                className="px-2.5 py-1 text-xs bg-nature-green-600 hover:bg-nature-green-700 disabled:bg-nature-green-400 disabled:cursor-not-allowed text-white rounded transition-colors font-medium"
                               >
-                                {t.common.setDefault || 'Set Default'}
+                                {settingDefaultAddress === address.id ? 'Setting default...' : (t.common.setDefault || 'Set Default')}
                               </button>
                             )}
                             <button
