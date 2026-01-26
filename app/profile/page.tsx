@@ -66,7 +66,8 @@ export default function ProfilePage() {
       setUser(user)
       await Promise.all([
         fetchOrders(user.id),
-        fetchAddresses(user.id)
+        fetchAddresses(user.id),
+        fetchOrderInfoEntries(user.id)
       ])
       hideLoader()
       setLoading(false)
