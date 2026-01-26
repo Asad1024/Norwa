@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Product, Category } from '@/types/database'
-import { Image as ImageIcon, Search, Package } from 'lucide-react'
+import { Image as ImageIcon, Search, Package, Edit, Trash2, UserPlus } from 'lucide-react'
 import ProductImage from '@/components/ProductImage'
 import { useTranslations } from '@/hooks/useTranslations'
 import { useLanguageStore } from '@/store/languageStore'
@@ -206,6 +206,7 @@ export default function AdminProductsPage() {
                   <tr className="border-b border-gray-200">
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">{t.adminProducts.image}</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">{t.adminProducts.name}</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">Product Number</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">{t.adminProducts.category}</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">{t.adminProducts.description}</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">{t.adminProducts.price}</th>
@@ -241,6 +242,11 @@ export default function AdminProductsPage() {
                           </div>
                         </td>
                         <td className="py-3 px-4">
+                          <div className="text-sm text-gray-600 font-mono">
+                            {product.product_number || '-'}
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
                           <div className="text-sm text-gray-600">
                             {categoryName}
                           </div>
@@ -268,24 +274,28 @@ export default function AdminProductsPage() {
                         </td>
                         <td className="py-3 px-4 text-right">
                           <div className="flex items-center justify-end gap-2">
-                            <NavLink
+                            <Link
                               href={`/admin/products/${product.id}/edit`}
-                              className="px-3 py-1.5 bg-nature-green-600 hover:bg-nature-green-700 text-white text-xs font-medium rounded transition-colors whitespace-nowrap h-7 flex items-center justify-center"
+                              onClick={() => showLoader(t.loader.loading)}
+                              className="p-1.5 bg-nature-green-600 hover:bg-nature-green-700 text-white rounded transition-colors flex items-center justify-center"
+                              title={t.adminProducts.edit}
                             >
-                              {t.adminProducts.edit}
-                            </NavLink>
-                            <NavLink
-                              href={`/admin/products/${product.id}/assign`}
-                              className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded transition-colors whitespace-nowrap h-7 flex items-center justify-center"
-                            >
-                              {t.adminProducts.assignUsers || 'Assign Users'}
-                            </NavLink>
+                              <Edit className="w-4 h-4" />
+                            </Link>
                             <button
                               onClick={() => handleDeleteClick(product)}
-                              className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded transition-colors whitespace-nowrap h-7 flex items-center justify-center"
+                              className="p-1.5 bg-red-600 hover:bg-red-700 text-white rounded transition-colors flex items-center justify-center"
+                              title={t.adminProducts.delete}
                             >
-                              {t.adminProducts.delete}
+                              <Trash2 className="w-4 h-4" />
                             </button>
+                            <NavLink
+                              href={`/admin/products/${product.id}/assign`}
+                              className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded transition-colors whitespace-nowrap h-7 flex items-center justify-center gap-1"
+                            >
+                              <UserPlus className="w-3.5 h-3.5" />
+                              {t.adminProducts.assignUsers || 'Assign Users'}
+                            </NavLink>
                           </div>
                         </td>
                       </tr>
