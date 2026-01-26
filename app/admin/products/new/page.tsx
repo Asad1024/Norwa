@@ -384,13 +384,13 @@ export default function NewProductPage() {
                 <input
                   id="product_number"
                   type="text"
-                  pattern="[0-9]{6,8}"
+                  pattern="[0-9]{6}"
                   minLength={6}
-                  maxLength={8}
+                  maxLength={6}
                   value={formData.product_number}
                   onChange={(e) => {
                     const value = e.target.value.replace(/\D/g, '') // Only allow digits
-                    if (value.length <= 8) {
+                    if (value.length <= 6) {
                       setFormData({ ...formData, product_number: value })
                     }
                   }}
@@ -401,22 +401,22 @@ export default function NewProductPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    // Generate random 6-8 digit number
+                    // Generate random exactly 6 digit number
                     // Math.random() generates 0-1, multiply by range, add minimum
                     // Math.floor() rounds down to integer
-                    const min = 100000 // 6 digits minimum
-                    const max = 99999999 // 8 digits maximum
+                    const min = 100000 // 6 digits minimum (100000)
+                    const max = 999999 // 6 digits maximum (999999)
                     const randomNumber = Math.floor(Math.random() * (max - min + 1)) + min
                     setFormData({ ...formData, product_number: randomNumber.toString() })
                   }}
                   className="px-4 py-2 bg-nature-green-600 hover:bg-nature-green-700 text-white font-medium rounded-lg transition-colors text-sm shadow-md hover:shadow-lg whitespace-nowrap"
-                  title="Generate random product number"
+                  title="Generate random 6-digit product number"
                 >
                   Auto Generate
                 </button>
               </div>
               <p className="text-xs text-gray-500 mt-1">
-                6-8 digits required. Click "Auto Generate" to create a random number.
+                6 digits required. Click "Auto Generate" to create a random 6-digit number.
               </p>
             </div>
 
