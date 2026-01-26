@@ -353,18 +353,23 @@ export default function CheckoutPage() {
               <h2 className="text-2xl font-bold text-nature-green-800 mb-6">
                 Order Summary
               </h2>
-              <div className="space-y-4 mb-6">
+              
+              {/* Items List */}
+              <div className="space-y-3 mb-6 pb-6 border-b-2 border-nature-green-200">
+                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
+                  {t.cart.items}
+                </h3>
                 {items.map((item) => (
                   <div
                     key={item.id}
-                    className="flex items-center justify-between py-2 border-b border-nature-green-100 last:border-b-0"
+                    className="flex items-center justify-between py-2"
                   >
                     <div className="flex-1">
                       <p className="font-semibold text-gray-800 text-sm">
                         {item.name}
                       </p>
                       <p className="text-gray-500 text-xs">
-                        Qty: {item.quantity} × kr {item.price.toFixed(2)}
+                        {t.common.quantity}: {item.quantity} × kr {item.price.toFixed(2)}
                       </p>
                     </div>
                     <p className="font-bold text-nature-blue-600">
@@ -373,23 +378,26 @@ export default function CheckoutPage() {
                   </div>
                 ))}
               </div>
-              <div className="space-y-3 mb-4">
+
+              {/* Summary Calculations */}
+              <div className="space-y-3">
                 <div className="flex justify-between text-sm text-gray-600">
-                  <span>{t.cart.items} ({items.length})</span>
+                  <span>{t.cart.items} ({items.length}):</span>
                   <span className="font-medium text-gray-900">kr {getTotal().toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm text-gray-600">
-                  <span>{t.common.shipping}</span>
+                  <span>{t.common.shipping}:</span>
                   <span className={`font-medium ${shippingCharge === 0 ? 'text-nature-green-600' : 'text-gray-900'}`}>
                     {shippingCharge === 0 ? t.common.free : `kr ${shippingCharge.toFixed(2)}`}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm text-gray-600">
-                  <span>Tax (25%)</span>
+                  <span>Tax (25%):</span>
                   <span className="font-medium text-gray-900">kr {((getTotal() + shippingCharge) * 0.25).toFixed(2)}</span>
                 </div>
               </div>
-              <div className="flex justify-between items-center pt-4 border-t-2 border-nature-green-200">
+              
+              <div className="flex justify-between items-center pt-4 mt-4 border-t-2 border-nature-green-200">
                 <span className="text-xl font-bold text-nature-green-800">
                   {t.common.total}:
                 </span>
