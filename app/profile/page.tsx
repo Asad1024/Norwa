@@ -23,7 +23,9 @@ export default function ProfilePage() {
   const [addressForm, setAddressForm] = useState({
     label: 'Home',
     address: '',
-    phone_number: '',
+    customer: '',
+    postal_code: '',
+    postal_place: '',
   })
   const [showChangePassword, setShowChangePassword] = useState(false)
   const [passwordForm, setPasswordForm] = useState({
@@ -238,10 +240,13 @@ export default function ProfilePage() {
   const handleSaveAddress = async () => {
     if (!user) return
 
-    if (!addressForm.address.trim() || !addressForm.phone_number.trim()) {
+    if (!addressForm.address.trim() || !addressForm.customer.trim() || !addressForm.postal_code.trim() || !addressForm.postal_place.trim()) {
       alert('Please fill in all required fields')
       return
     }
+
+    // Format address as: customer\naddress\npostal_code postal_place
+    const formattedAddress = `${addressForm.customer}\n${addressForm.address}\n${addressForm.postal_code} ${addressForm.postal_place}`
 
     try {
       if (editingAddress) {
@@ -249,16 +254,14 @@ export default function ProfilePage() {
           .from('user_addresses')
           .update({
             label: addressForm.label,
-            address: addressForm.address,
-            phone_number: addressForm.phone_number,
+            address: formattedAddress,
           })
           .eq('id', editingAddress)
       } else {
         await supabase.from('user_addresses').insert({
           user_id: user.id,
           label: addressForm.label,
-          address: addressForm.address,
-          phone_number: addressForm.phone_number,
+          address: formattedAddress,
           is_default: addresses.length === 0,
         })
       }
@@ -266,7 +269,7 @@ export default function ProfilePage() {
       await fetchAddresses(user.id)
       setEditingAddress(null)
       setShowAddAddress(false)
-      setAddressForm({ label: 'Home', address: '', phone_number: '' })
+      setAddressForm({ label: 'Home', address: '', customer: '', postal_code: '', postal_place: '' })
     } catch (error) {
       console.error('Error saving address:', error)
       alert('Failed to save address')
@@ -300,10 +303,20 @@ export default function ProfilePage() {
 
   const startEdit = (address: Address) => {
     setEditingAddress(address.id)
+    // Parse address format: customer\naddress\npostal_code postal_place
+    const addressLines = address.address.split('\n')
+    const customer = addressLines[0] || ''
+    const addressText = addressLines[1] || ''
+    const postalParts = addressLines[2]?.split(' ') || []
+    const postalCode = postalParts[0] || ''
+    const postalPlace = postalParts.slice(1).join(' ') || ''
+    
     setAddressForm({
       label: address.label || 'Home',
-      address: address.address,
-      phone_number: address.phone_number,
+      address: addressText,
+      customer: customer,
+      postal_code: postalCode,
+      postal_place: postalPlace,
     })
     setShowAddAddress(true)
   }
@@ -822,13 +835,13 @@ export default function ProfilePage() {
                       <path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       <path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
-                    {t.checkout.shippingInfo}
+                    {t.checkout.deliveryInformation}
                   </h2>
                   <button
                     onClick={() => {
                       setShowAddAddress(!showAddAddress)
                       setEditingAddress(null)
-                      setAddressForm({ label: 'Home', address: '', phone_number: '' })
+                      setAddressForm({ label: 'Home', address: '', customer: '', postal_code: '', postal_place: '' })
                     }}
                     className="px-3 py-1.5 bg-nature-green-600 hover:bg-nature-green-700 text-white font-medium rounded-lg transition-colors text-sm shadow-md hover:shadow-lg"
                   >
@@ -850,16 +863,6 @@ export default function ProfilePage() {
                           onChange={(e) => setAddressForm({ ...addressForm, label: e.target.value })}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-nature-green-500 focus:border-nature-green-500 transition-all text-sm"
                           placeholder="Home"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-2 uppercase tracking-wide">{t.common.phone} *</label>
-                        <input
-                          type="tel"
-                          value={addressForm.phone_number}
-                          onChange={(e) => setAddressForm({ ...addressForm, phone_number: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-nature-green-500 focus:border-nature-green-500 transition-all text-sm"
-                          placeholder="+47 123 45 678"
                         />
                       </div>
                     </div>
@@ -904,7 +907,6 @@ export default function ProfilePage() {
                               )}
                             </div>
                             <p className="text-sm text-gray-700 mb-1">{address.address}</p>
-                            <p className="text-xs text-gray-600">{address.phone_number}</p>
                           </div>
                           <div className="flex gap-2 ml-4">
                             {!address.is_default && (

@@ -169,8 +169,10 @@ export interface UITranslations {
     postalPlace: string
     billingInformation: string
     billingAddress: string
-    payment: string
-    paymentMethodInvoice: string
+      payment: string
+      paymentMethodInvoice: string
+      paymentMethodCashOnDelivery: string
+      paymentMethodCard: string
     orderInformation: string
     note: string
     notePlaceholder: string
@@ -661,6 +663,8 @@ const translations: Record<Language, UITranslations> = {
       billingAddress: 'BILLING ADDRESS',
       payment: 'Payment',
       paymentMethodInvoice: 'Invoice',
+      paymentMethodCashOnDelivery: 'Cash on delivery',
+      paymentMethodCard: 'Card payment (coming soon)',
       orderInformation: 'Order Information',
       note: 'Note / Extra Information',
       notePlaceholder: 'Add any additional information or special instructions...',
@@ -1149,6 +1153,8 @@ const translations: Record<Language, UITranslations> = {
       billingAddress: 'FAKTURAADRESSE',
       payment: 'Betaling',
       paymentMethodInvoice: 'Faktura',
+      paymentMethodCashOnDelivery: 'Betal ved levering',
+      paymentMethodCard: 'Kortbetaling (kommer snart)',
       orderInformation: 'Bestillingsinformasjon',
       note: 'Note / Ekstra informasjon',
       notePlaceholder: 'Legg til tilleggsinformasjon eller spesielle instruksjoner...',

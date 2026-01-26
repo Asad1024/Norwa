@@ -39,6 +39,7 @@ export default function CheckoutPage() {
     save_delivery_info: false,
     save_order_info: false,
     delivery_time: '',
+    payment_method: 'cash_on_delivery',
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -725,6 +726,44 @@ export default function CheckoutPage() {
                   </div>
                 </div>
 
+                {/* Billing Information Section */}
+                <div className="bg-blue-50 rounded-lg p-6 border-2 border-blue-200">
+                  <h3 className="text-xl font-bold text-blue-800 mb-4 flex items-center gap-2">
+                    <span>💳</span>
+                    {t.checkout.billingInformation}
+                  </h3>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <label htmlFor="payment_method" className="block text-sm font-semibold text-blue-700 mb-2">
+                        {t.checkout.payment} *
+                      </label>
+                      <div className="space-y-2">
+                        <label className="flex items-center gap-3 p-3 bg-white rounded-lg border-2 border-blue-200 cursor-pointer hover:border-blue-400 transition-all">
+                          <input
+                            type="radio"
+                            name="payment_method"
+                            value="cash_on_delivery"
+                            checked={formData.payment_method === 'cash_on_delivery'}
+                            onChange={(e) => setFormData({ ...formData, payment_method: e.target.value })}
+                            className="w-4 h-4 text-blue-600 border-blue-300 focus:ring-blue-500"
+                          />
+                          <span className="text-gray-900 font-medium">{t.checkout.paymentMethodCashOnDelivery}</span>
+                        </label>
+                        <label className="flex items-center gap-3 p-3 bg-gray-100 rounded-lg border-2 border-gray-300 cursor-not-allowed opacity-60">
+                          <input
+                            type="radio"
+                            name="payment_method"
+                            value="card"
+                            disabled
+                            className="w-4 h-4 text-gray-400 border-gray-300 cursor-not-allowed"
+                          />
+                          <span className="text-gray-600">{t.checkout.paymentMethodCard}</span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
                 <div className="flex gap-4 pt-4">
                   <Link
