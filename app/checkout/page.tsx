@@ -33,7 +33,6 @@ export default function CheckoutPage() {
     customer_reference: '',
     delivery_instructions: '',
     dispatch_date: '',
-    periodic_orders: false,
     alternative_delivery_address: false,
     save_information: false,
     delivery_time: '',
@@ -163,7 +162,6 @@ export default function CheckoutPage() {
           customer_reference: formData.customer_reference || null,
           delivery_instructions: formData.delivery_instructions || null,
           dispatch_date: formData.dispatch_date || null,
-          periodic_orders: formData.periodic_orders || false,
           alternative_delivery_address: formData.alternative_delivery_address || false,
           delivery_time: formData.delivery_time || null,
         })
@@ -567,33 +565,17 @@ export default function CheckoutPage() {
                       </label>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label htmlFor="dispatch_date" className="block text-sm font-semibold text-blue-700 mb-2">
-                          {t.checkout.dispatchDate}
-                        </label>
-                        <input
-                          id="dispatch_date"
-                          type="date"
-                          value={formData.dispatch_date}
-                          onChange={(e) => setFormData({ ...formData, dispatch_date: e.target.value })}
-                          className="w-full px-4 py-3 border-2 border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                        />
-                      </div>
-                      <div className="flex items-end">
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            id="periodic_orders"
-                            checked={formData.periodic_orders}
-                            onChange={(e) => setFormData({ ...formData, periodic_orders: e.target.checked })}
-                            className="w-4 h-4 text-blue-600 border-blue-300 rounded focus:ring-blue-500"
-                          />
-                          <label htmlFor="periodic_orders" className="text-sm text-blue-700">
-                            {t.checkout.periodicOrders}
-                          </label>
-                        </div>
-                      </div>
+                    <div>
+                      <label htmlFor="dispatch_date" className="block text-sm font-semibold text-blue-700 mb-2">
+                        {t.checkout.dispatchDate}
+                      </label>
+                      <input
+                        id="dispatch_date"
+                        type="date"
+                        value={formData.dispatch_date}
+                        onChange={(e) => setFormData({ ...formData, dispatch_date: e.target.value })}
+                        className="w-full px-4 py-3 border-2 border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      />
                     </div>
 
                     <div>

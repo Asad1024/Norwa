@@ -305,7 +305,7 @@ export default function OrderDetailPage() {
             )}
 
             {/* Order Information */}
-            {(order.email_for_order_confirmation || order.customer_reference || order.delivery_instructions || order.delivery_time || order.phone_number || order.dispatch_date || order.periodic_orders || orderUser) && (
+            {(order.email_for_order_confirmation || order.customer_reference || order.delivery_instructions || order.delivery_time || order.phone_number || order.dispatch_date || orderUser) && (
               <div className="mt-6 pt-6 border-t border-gray-200">
                 <h3 className="text-lg font-bold text-blue-800 mb-3 flex items-center gap-2">
                   <span>📝</span>
@@ -356,20 +356,10 @@ export default function OrderDetailPage() {
                       <p className="text-gray-900 whitespace-pre-wrap">{order.delivery_instructions}</p>
                     </div>
                   )}
-                  {(order.periodic_orders || order.alternative_delivery_address) && (
-                    <div className="flex flex-wrap gap-4">
-                      {order.periodic_orders && (
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold text-blue-700">{t.checkout.periodicOrders}:</span>
-                          <span className="text-gray-900">{t.common.yes}</span>
-                        </div>
-                      )}
-                      {order.alternative_delivery_address && (
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold text-blue-700">{t.checkout.alternativeDeliveryAddress}:</span>
-                          <span className="text-gray-900">{t.common.yes}</span>
-                        </div>
-                      )}
+                  {order.alternative_delivery_address && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-blue-700">{t.checkout.alternativeDeliveryAddress}:</span>
+                      <span className="text-gray-900">{t.common.yes}</span>
                     </div>
                   )}
                 </div>
