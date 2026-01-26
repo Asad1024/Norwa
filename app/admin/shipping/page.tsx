@@ -13,7 +13,7 @@ export default function AdminShippingPage() {
   const router = useRouter()
   const supabase = createClient()
   const { showLoader, hideLoader } = useGlobalLoader()
-  const [shippingCharge, setShippingCharge] = useState<number>(0)
+  const [shippingCharge, setShippingCharge] = useState<number | ''>(0)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [user, setUser] = useState<any>(null)
@@ -85,7 +85,8 @@ export default function AdminShippingPage() {
       }
 
       if (data) {
-        setShippingCharge(parseFloat(data.shipping_charge) || 0)
+        const charge = parseFloat(data.shipping_charge) || 0
+        setShippingCharge(charge)
       }
     } catch (error) {
       console.error('Error fetching shipping settings:', error)
@@ -103,10 +104,11 @@ export default function AdminShippingPage() {
         .eq('is_active', true)
 
       // Insert new active setting
+      const chargeValue = shippingCharge === '' ? 0 : (typeof shippingCharge === 'number' ? shippingCharge : 0)
       const { error } = await supabase
         .from('shipping_settings')
         .insert({
-          shipping_charge: shippingCharge,
+          shipping_charge: chargeValue,
           is_active: true,
         })
 
@@ -172,10 +174,17 @@ export default function AdminShippingPage() {
                   type="number"
                   min="0"
                   step="0.01"
-                  value={shippingCharge}
+                  value={shippingCharge === '' ? '' : shippingCharge}
                   onChange={(e) => {
-                    const value = parseFloat(e.target.value) || 0
-                    setShippingCharge(value >= 0 ? value : 0)
+                    const inputValue = e.target.value
+                    if (inputValue === '') {
+                      setShippingCharge('')
+                    } else {
+                      const numValue = parseFloat(inputValue)
+                      if (!isNaN(numValue) && numValue >= 0) {
+                        setShippingCharge(numValue)
+                      }
+                    }
                   }}
                   className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-nature-green-500 focus:border-transparent transition-all text-lg font-medium"
                   placeholder="0.00"
@@ -191,10 +200,10 @@ export default function AdminShippingPage() {
                   <div className="flex justify-between text-gray-600">
                     <span>Shipping:</span>
                     <span className="font-medium text-gray-900">
-                      {shippingCharge === 0 ? (
+                      {shippingCharge === '' || shippingCharge === 0 ? (
                         <span className="text-nature-green-600">Free</span>
                       ) : (
-                        `kr ${shippingCharge.toFixed(2)}`
+                        `kr ${typeof shippingCharge === 'number' ? shippingCharge.toFixed(2) : '0.00'}`
                       )}
                     </span>
                   </div>
