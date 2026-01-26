@@ -204,9 +204,9 @@ export default function AdminProductsPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-200">
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">Product Number</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">{t.adminProducts.image}</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">{t.adminProducts.name}</th>
-                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">Product Number</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">{t.adminProducts.category}</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">{t.adminProducts.description}</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-700 uppercase tracking-wider">{t.adminProducts.price}</th>
@@ -225,6 +225,11 @@ export default function AdminProductsPage() {
                         className="hover:bg-gray-50 transition-colors"
                       >
                         <td className="py-3 px-4">
+                          <div className="text-sm text-gray-600 font-mono">
+                            {product.product_number || '-'}
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
                           <div className="w-20 h-20 rounded-lg overflow-hidden relative">
                             <ProductImage
                               imageUrl={product.image_url}
@@ -239,11 +244,6 @@ export default function AdminProductsPage() {
                         <td className="py-3 px-4">
                           <div className="font-medium text-sm text-gray-900">
                             {getTranslation(product.name_translations, language)}
-                          </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="text-sm text-gray-600 font-mono">
-                            {product.product_number || '-'}
                           </div>
                         </td>
                         <td className="py-3 px-4">
