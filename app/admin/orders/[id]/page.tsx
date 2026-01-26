@@ -216,7 +216,7 @@ export default function OrderDetailPage() {
               <div>
                 <p className="text-sm font-semibold text-gray-500 mb-1">{t.orders.total}</p>
                 <p className="text-3xl font-extrabold bg-gradient-to-r from-nature-blue-600 to-nature-green-600 bg-clip-text text-transparent">
-                  ${order.total.toFixed(2)}
+                  kr {order.total.toFixed(2)}
                 </p>
               </div>
             </div>
@@ -292,13 +292,13 @@ export default function OrderDetailPage() {
                         )}
                         <div className="flex items-center gap-4 text-sm text-gray-600">
                           <span>{t.common.quantity}: <strong className="text-nature-green-800">{item.quantity}</strong></span>
-                          <span>{t.common.price}: <strong className="text-nature-green-800">${item.price.toFixed(2)}</strong></span>
+                          <span>{t.common.price}: <strong className="text-nature-green-800">kr {item.price.toFixed(2)}</strong></span>
                         </div>
                       </div>
                       <div className="text-right">
                         <p className="text-sm text-gray-500 mb-1">{t.common.subtotal}</p>
                         <p className="text-xl font-bold text-nature-blue-600">
-                          ${(item.price * item.quantity).toFixed(2)}
+                          kr {(item.price * item.quantity).toFixed(2)}
                         </p>
                       </div>
                     </div>

@@ -36,6 +36,7 @@ export default function NewProductPage() {
     category_id: '',
     price: '',
     stock: '0',
+    product_number: '',
   })
 
   useEffect(() => {
@@ -291,6 +292,7 @@ export default function NewProductPage() {
         category_id: formData.category_id || null,
         price: parseFloat(formData.price),
         stock: parseInt(formData.stock) || 0,
+        product_number: formData.product_number || null,
         image_url: imageUrl || null,
         technical_data_url: technicalDataUrl || null,
       }).select()
@@ -498,6 +500,51 @@ export default function NewProductPage() {
               />
               <p className="text-xs text-gray-500 mt-1">
                 {t.forms.stockDescription || 'Number of items available in stock'}
+              </p>
+            </div>
+
+            <div>
+              <label
+                htmlFor="product_number"
+                className="block text-xs font-medium text-gray-700 mb-2 uppercase tracking-wide"
+              >
+                Product Number *
+              </label>
+              <div className="flex gap-2">
+                <input
+                  id="product_number"
+                  type="text"
+                  pattern="[0-9]{6,8}"
+                  minLength={6}
+                  maxLength={8}
+                  value={formData.product_number}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '') // Only allow digits
+                    if (value.length <= 8) {
+                      setFormData({ ...formData, product_number: value })
+                    }
+                  }}
+                  required
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm"
+                  placeholder="123456"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    // Generate random 6-8 digit number
+                    const min = 100000 // 6 digits
+                    const max = 99999999 // 8 digits
+                    const randomNumber = Math.floor(Math.random() * (max - min + 1)) + min
+                    setFormData({ ...formData, product_number: randomNumber.toString() })
+                  }}
+                  className="px-4 py-2 bg-nature-green-600 hover:bg-nature-green-700 text-white font-medium rounded-lg transition-colors text-sm shadow-md hover:shadow-lg whitespace-nowrap"
+                  title="Generate random product number"
+                >
+                  Auto Generate
+                </button>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                6-8 digits required
               </p>
             </div>
 

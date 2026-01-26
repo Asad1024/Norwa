@@ -9,6 +9,7 @@ import { useLanguageStore } from '@/store/languageStore'
 import { getTranslation } from '@/lib/translations'
 import { useTranslations } from '@/hooks/useTranslations'
 import { getCategoryEmoji } from '@/lib/categoryIcons'
+import { useState } from 'react'
 
 interface ProductDetailClientProps {
   product: Product & { category_data?: any }
@@ -17,6 +18,7 @@ interface ProductDetailClientProps {
 export default function ProductDetailClient({ product }: ProductDetailClientProps) {
   const language = useLanguageStore((state) => state.language)
   const t = useTranslations()
+  const [quantity, setQuantity] = useState(1)
   const productName = getTranslation(product.name_translations, language)
   const productDescription = getTranslation(product.description_translations, language)
   const categoryName = product.category_data
@@ -79,6 +81,11 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
 
           {/* Product Details */}
           <div className="flex flex-col">
+            {product.product_number && (
+              <p className="text-sm text-gray-500 mb-2 font-mono">
+                Product Number: #{product.product_number}
+              </p>
+            )}
             {categoryName && (
               <div className="mb-4">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-700 rounded text-sm font-medium">
@@ -91,7 +98,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
               {productName}
             </h1>
             <p className="text-3xl font-semibold text-gray-900 mb-4">
-              ${product.price.toFixed(2)}
+              kr {product.price.toFixed(2)}
             </p>
             <div className="mb-4">
               <span className={`inline-block px-3 py-1.5 rounded text-sm font-medium ${
@@ -127,8 +134,31 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
                 </button>
               </div>
             )}
-            <div className="mt-auto">
-              <AddToCartButton product={product} />
+            <div className="mt-auto space-y-4">
+              {/* Quantity Selector */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2">
+                  {t.common.quantity || 'Quantity'}
+                </label>
+                <div className="flex items-center gap-2 bg-nature-green-50 rounded-lg p-1 border border-nature-green-200 w-fit">
+                  <button
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    className="w-8 h-8 rounded bg-white hover:bg-nature-green-100 text-nature-green-700 font-medium transition-colors text-sm border border-nature-green-200 hover:border-nature-green-300"
+                  >
+                    -
+                  </button>
+                  <span className="w-12 text-center font-medium text-gray-900 text-sm">
+                    {quantity}
+                  </span>
+                  <button
+                    onClick={() => setQuantity(quantity + 1)}
+                    className="w-8 h-8 rounded bg-white hover:bg-nature-green-100 text-nature-green-700 font-medium transition-colors text-sm border border-nature-green-200 hover:border-nature-green-300"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+              <AddToCartButton product={product} quantity={quantity} />
             </div>
           </div>
         </div>

@@ -74,10 +74,10 @@ serve(async (req) => {
                   ${item.quantity}
                 </td>
                 <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: right;">
-                  $${parseFloat(item.price).toFixed(2)}
+                  kr ${parseFloat(item.price).toFixed(2)}
                 </td>
                 <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: right;">
-                  $${(parseFloat(item.price) * item.quantity).toFixed(2)}
+                  kr ${(parseFloat(item.price) * item.quantity).toFixed(2)}
                 </td>
               </tr>
             `
@@ -88,7 +88,7 @@ serve(async (req) => {
       const { data: emailData, error } = await resend.emails.send({
         from: 'NORWA Orders <onboarding@resend.dev>',
         to: [adminEmail],
-        subject: `New Order #${order.id.substring(0, 8)} - $${parseFloat(order.total).toFixed(2)}`,
+        subject: `New Order #${order.id.substring(0, 8)} - kr ${parseFloat(order.total).toFixed(2)}`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #16a34a;">New Order Received</h2>
@@ -123,7 +123,7 @@ serve(async (req) => {
                       Total:
                     </td>
                     <td style="padding: 15px; text-align: right; font-weight: bold; font-size: 18px; color: #16a34a; border-top: 2px solid #16a34a;">
-                      $${parseFloat(order.total).toFixed(2)}
+                      kr ${parseFloat(order.total).toFixed(2)}
                     </td>
                   </tr>
                 </tfoot>

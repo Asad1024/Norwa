@@ -159,7 +159,7 @@ export default function CartPage() {
                         {item.name}
                       </h3>
                       <p className="text-gray-600 font-medium text-sm mb-3">
-                        ${item.price.toFixed(2)} {t.common.each}
+                        kr {item.price.toFixed(2)} {t.common.each}
                       </p>
 
                       {/* Quantity Controls */}
@@ -223,7 +223,7 @@ export default function CartPage() {
                     <div className="text-right w-full sm:w-auto">
                       <p className="text-xs text-gray-500 mb-1">{t.common.subtotal}</p>
                       <p className="font-semibold text-gray-900 text-lg">
-                        ${(item.price * item.quantity).toFixed(2)}
+                        kr {(item.price * item.quantity).toFixed(2)}
                       </p>
                     </div>
                   </div>
@@ -242,17 +242,21 @@ export default function CartPage() {
               <div className="space-y-3 mb-5">
                 <div className="flex justify-between text-sm text-gray-600">
                   <span>{t.cart.items} ({items.length})</span>
-                  <span className="font-medium text-gray-900">${getTotal().toFixed(2)}</span>
+                  <span className="font-medium text-gray-900">kr {getTotal().toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm text-gray-600">
                   <span>{t.common.shipping}</span>
                   <span className="font-medium text-nature-green-600">{t.common.free}</span>
                 </div>
+                <div className="flex justify-between text-sm text-gray-600">
+                  <span>Tax (25%)</span>
+                  <span className="font-medium text-gray-900">kr {(getTotal() * 0.25).toFixed(2)}</span>
+                </div>
                 <div className="pt-3 border-t border-gray-200">
                   <div className="flex justify-between items-center">
                     <span className="text-base font-semibold text-gray-900">{t.common.total}</span>
                     <span className="text-xl font-semibold text-gray-900">
-                      ${getTotal().toFixed(2)}
+                      kr {(getTotal() * 1.25).toFixed(2)}
                     </span>
                   </div>
                 </div>

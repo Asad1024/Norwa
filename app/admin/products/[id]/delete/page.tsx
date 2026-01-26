@@ -114,7 +114,7 @@ export default function DeleteProductPage() {
                 {getTranslation(product.description_translations, language)}
               </p>
               <p className="text-nature-blue-600 font-semibold">
-                ${product.price.toFixed(2)}
+                kr {product.price.toFixed(2)}
               </p>
             </div>
           </div>

@@ -12,9 +12,10 @@ import { useLanguageStore } from '@/store/languageStore'
 
 interface AddToCartButtonProps {
   product: Product
+  quantity?: number
 }
 
-export default function AddToCartButton({ product }: AddToCartButtonProps) {
+export default function AddToCartButton({ product, quantity = 1 }: AddToCartButtonProps) {
   const addItem = useCartStore((state) => state.addItem)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
@@ -38,7 +39,7 @@ export default function AddToCartButton({ product }: AddToCartButtonProps) {
         price: product.price,
         stock: product.stock || 0,
         image_url: product.image_url,
-        quantity: 1,
+        quantity: quantity,
       }
       sessionStorage.setItem('addToCartAfterLogin', JSON.stringify(productData))
       // Store the current page URL to redirect back after login
@@ -58,7 +59,7 @@ export default function AddToCartButton({ product }: AddToCartButtonProps) {
         stock: product.stock || 0,
         image_url: product.image_url,
       },
-      1
+      quantity
     )
     setLoading(false)
     showToast(`${productName} ${t.productDetail.addedToCart}`, 'success')

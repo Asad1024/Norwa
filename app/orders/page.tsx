@@ -133,12 +133,12 @@ export default function OrdersPage() {
                               {productName}
                             </p>
                             <p className="text-xs text-gray-500">
-                              {t.common.quantity}: {item.quantity} × ${item.price.toFixed(2)}
+                              {t.common.quantity}: {item.quantity} × kr {item.price.toFixed(2)}
                             </p>
                           </div>
                         </div>
                         <p className="font-semibold text-gray-900 text-sm">
-                          ${(item.price * item.quantity).toFixed(2)}
+                          kr {(item.price * item.quantity).toFixed(2)}
                         </p>
                       </div>
                     )
@@ -150,7 +150,7 @@ export default function OrdersPage() {
                     {t.common.total}:
                   </span>
                   <span className="text-xl font-semibold text-gray-900">
-                    ${order.total.toFixed(2)}
+                    kr {order.total.toFixed(2)}
                   </span>
                 </div>
               </div>

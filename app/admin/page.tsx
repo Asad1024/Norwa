@@ -522,7 +522,7 @@ export default function AdminDashboard() {
                         {new Date(order.created_at).toLocaleDateString()}
                       </td>
                       <td className="py-3 px-4 font-semibold text-gray-900 text-sm">
-                        ${order.total.toFixed(2)}
+                        kr {order.total.toFixed(2)}
                       </td>
                       <td className="py-3 px-4">
                         <span

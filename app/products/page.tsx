@@ -402,6 +402,11 @@ export default function ProductsPage() {
                     )}
                   </div>
                   <div className="p-5">
+                    {product.product_number && (
+                      <p className="text-xs text-gray-500 mb-1 font-mono">
+                        #{product.product_number}
+                      </p>
+                    )}
                     {categoryName && (
                       <div className="mb-2">
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 text-gray-700 rounded text-xs font-medium">
@@ -429,7 +434,7 @@ export default function ProductsPage() {
                     </div>
                     <div className="flex items-center justify-between">
                       <p className="text-lg font-semibold text-gray-900">
-                        ${product.price.toFixed(2)}
+                        kr {product.price.toFixed(2)}
                       </p>
                       <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-nature-green-600 transition-colors" />
                     </div>

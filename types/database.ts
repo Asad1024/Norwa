@@ -28,6 +28,7 @@ export interface Product {
   stock: number
   image_url: string | null
   technical_data_url: string | null
+  product_number: string | null // 6-8 digit product number
   created_at: string
   updated_at: string
   category_data?: Category // For joined queries

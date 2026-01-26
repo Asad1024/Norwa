@@ -21,6 +21,21 @@ export default function CheckoutPage() {
     label: 'Home',
     shipping_address: '',
     phone_number: '',
+    // Delivery Information
+    delivery_customer: '',
+    delivery_address: '',
+    delivery_postal_code: '',
+    delivery_postal_place: '',
+    delivery_type: 'Ferdigpakk (gebyr)',
+    // Billing Information
+    billing_address: '',
+    billing_customer: '',
+    billing_postal_code: '',
+    billing_postal_place: '',
+    payment_method: 'Faktura',
+    // Additional fields
+    note: '',
+    delivery_time: '',
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const t = useTranslations()
@@ -91,13 +106,22 @@ export default function CheckoutPage() {
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
 
-    if (!formData.shipping_address.trim()) {
-      newErrors.shipping_address = t.checkout.addressRequired
+    // Validate delivery information
+    if (!formData.delivery_customer.trim()) {
+      newErrors.delivery_customer = 'Customer name is required'
+    }
+    if (!formData.delivery_address.trim()) {
+      newErrors.delivery_address = 'Delivery address is required'
+    }
+    if (!formData.delivery_postal_code.trim()) {
+      newErrors.delivery_postal_code = 'Postal code is required'
+    }
+    if (!formData.delivery_postal_place.trim()) {
+      newErrors.delivery_postal_place = 'Postal place is required'
     }
 
-    if (!formData.phone_number.trim()) {
-      newErrors.phone_number = t.checkout.phoneRequired
-    } else if (!/^\+?[\d\s-()]+$/.test(formData.phone_number)) {
+    // Use phone_number if provided, otherwise not required
+    if (formData.phone_number && !/^\+?[\d\s-()]+$/.test(formData.phone_number)) {
       newErrors.phone_number = t.checkout.phoneInvalid
     }
 
@@ -138,15 +162,18 @@ export default function CheckoutPage() {
         }
       }
 
-      // Create order with shipping information
+      // Create order with shipping information (including 25% tax)
+      // Combine delivery information into shipping_address for backward compatibility
+      const fullShippingAddress = `${formData.delivery_customer}\n${formData.delivery_address}\n${formData.delivery_postal_code} ${formData.delivery_postal_place}`
+      
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
           user_id: user.id,
-          total: getTotal(),
+          total: getTotal() * 1.25, // Include 25% tax
           status: 'pending',
-          shipping_address: formData.shipping_address,
-          phone_number: formData.phone_number,
+          shipping_address: fullShippingAddress,
+          phone_number: formData.phone_number || '',
         })
         .select()
         .single()
@@ -250,21 +277,35 @@ export default function CheckoutPage() {
                         {item.name}
                       </p>
                       <p className="text-gray-500 text-xs">
-                        Qty: {item.quantity} × ${item.price.toFixed(2)}
+                        Qty: {item.quantity} × kr {item.price.toFixed(2)}
                       </p>
                     </div>
                     <p className="font-bold text-nature-blue-600">
-                      ${(item.price * item.quantity).toFixed(2)}
+                      kr {(item.price * item.quantity).toFixed(2)}
                     </p>
                   </div>
                 ))}
+              </div>
+              <div className="space-y-3 mb-4">
+                <div className="flex justify-between text-sm text-gray-600">
+                  <span>{t.cart.items} ({items.length})</span>
+                  <span className="font-medium text-gray-900">kr {getTotal().toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm text-gray-600">
+                  <span>{t.common.shipping}</span>
+                  <span className="font-medium text-nature-green-600">{t.common.free}</span>
+                </div>
+                <div className="flex justify-between text-sm text-gray-600">
+                  <span>Tax (25%)</span>
+                  <span className="font-medium text-gray-900">kr {(getTotal() * 0.25).toFixed(2)}</span>
+                </div>
               </div>
               <div className="flex justify-between items-center pt-4 border-t-2 border-nature-green-200">
                 <span className="text-xl font-bold text-nature-green-800">
                   {t.common.total}:
                 </span>
                 <span className="text-3xl font-extrabold bg-gradient-to-r from-nature-blue-600 to-nature-green-600 bg-clip-text text-transparent">
-                  ${getTotal().toFixed(2)}
+                  kr {(getTotal() * 1.25).toFixed(2)}
                 </span>
               </div>
             </div>
@@ -278,7 +319,243 @@ export default function CheckoutPage() {
                 {t.checkout.shippingInfo}
               </h2>
 
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-8">
+                {/* Delivery Information Section */}
+                <div className="bg-nature-green-50 rounded-lg p-6 border-2 border-nature-green-200">
+                  <h3 className="text-xl font-bold text-nature-green-800 mb-4 flex items-center gap-2">
+                    <span>📍</span>
+                    Leveringsadresse
+                  </h3>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <label htmlFor="delivery_type" className="block text-sm font-semibold text-nature-green-700 mb-2">
+                        LEVERINGSADRESSE *
+                      </label>
+                      <select
+                        id="delivery_type"
+                        value={formData.delivery_type}
+                        onChange={(e) => setFormData({ ...formData, delivery_type: e.target.value })}
+                        className="w-full px-4 py-3 border-2 border-nature-green-200 rounded-lg focus:ring-2 focus:ring-nature-green-500 focus:border-transparent transition-all"
+                        required
+                      >
+                        <option value="Ferdigpakk (gebyr)">Ferdigpakk (gebyr)</option>
+                        <option value="Standard levering">Standard levering</option>
+                        <option value="Express levering">Express levering</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label htmlFor="delivery_customer" className="block text-sm font-semibold text-nature-green-700 mb-2">
+                        KUNDE *
+                      </label>
+                      <input
+                        id="delivery_customer"
+                        type="text"
+                        value={formData.delivery_customer}
+                        onChange={(e) => setFormData({ ...formData, delivery_customer: e.target.value })}
+                        className="w-full px-4 py-3 border-2 border-nature-green-200 rounded-lg focus:ring-2 focus:ring-nature-green-500 focus:border-transparent transition-all"
+                        required
+                        placeholder="Customer name"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="delivery_address" className="block text-sm font-semibold text-nature-green-700 mb-2">
+                        ADRESSE *
+                      </label>
+                      <textarea
+                        id="delivery_address"
+                        value={formData.delivery_address}
+                        onChange={(e) => setFormData({ ...formData, delivery_address: e.target.value })}
+                        rows={3}
+                        className="w-full px-4 py-3 border-2 border-nature-green-200 rounded-lg focus:ring-2 focus:ring-nature-green-500 focus:border-transparent transition-all resize-none"
+                        required
+                        placeholder="Delivery address"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label htmlFor="delivery_postal_code" className="block text-sm font-semibold text-nature-green-700 mb-2">
+                          POSTNUMMER *
+                        </label>
+                        <input
+                          id="delivery_postal_code"
+                          type="text"
+                          value={formData.delivery_postal_code}
+                          onChange={(e) => setFormData({ ...formData, delivery_postal_code: e.target.value })}
+                          className="w-full px-4 py-3 border-2 border-nature-green-200 rounded-lg focus:ring-2 focus:ring-nature-green-500 focus:border-transparent transition-all"
+                          required
+                          placeholder="1234"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="delivery_postal_place" className="block text-sm font-semibold text-nature-green-700 mb-2">
+                          POSTSTED *
+                        </label>
+                        <input
+                          id="delivery_postal_place"
+                          type="text"
+                          value={formData.delivery_postal_place}
+                          onChange={(e) => setFormData({ ...formData, delivery_postal_place: e.target.value })}
+                          className="w-full px-4 py-3 border-2 border-nature-green-200 rounded-lg focus:ring-2 focus:ring-nature-green-500 focus:border-transparent transition-all"
+                          required
+                          placeholder="Oslo"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Billing Information Section */}
+                <div className="bg-gray-50 rounded-lg p-6 border-2 border-gray-200">
+                  <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <span>📄</span>
+                    Faktura
+                  </h3>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        FAKTURAADRESSE
+                      </label>
+                      <div className="bg-white p-4 rounded-lg border border-gray-200">
+                        <p className="text-sm text-gray-700 mb-1">Asker & Bærum P</p>
+                        <p className="text-sm text-gray-700 mb-1">Mohammad Shah</p>
+                        <p className="text-sm text-gray-700 mb-1">Paalbergsvei 60</p>
+                        <p className="text-sm text-gray-700">1348 Rykkinn</p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label htmlFor="billing_customer" className="block text-sm font-semibold text-gray-700 mb-2">
+                        KUNDE
+                      </label>
+                      <input
+                        id="billing_customer"
+                        type="text"
+                        value={formData.billing_customer}
+                        onChange={(e) => setFormData({ ...formData, billing_customer: e.target.value })}
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all"
+                        placeholder="Billing customer name"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="billing_address" className="block text-sm font-semibold text-gray-700 mb-2">
+                        ADRESSE
+                      </label>
+                      <textarea
+                        id="billing_address"
+                        value={formData.billing_address}
+                        onChange={(e) => setFormData({ ...formData, billing_address: e.target.value })}
+                        rows={3}
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all resize-none"
+                        placeholder="Billing address"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label htmlFor="billing_postal_code" className="block text-sm font-semibold text-gray-700 mb-2">
+                          POSTNUMMER
+                        </label>
+                        <input
+                          id="billing_postal_code"
+                          type="text"
+                          value={formData.billing_postal_code}
+                          onChange={(e) => setFormData({ ...formData, billing_postal_code: e.target.value })}
+                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all"
+                          placeholder="1234"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="billing_postal_place" className="block text-sm font-semibold text-gray-700 mb-2">
+                          POSTSTED
+                        </label>
+                        <input
+                          id="billing_postal_place"
+                          type="text"
+                          value={formData.billing_postal_place}
+                          onChange={(e) => setFormData({ ...formData, billing_postal_place: e.target.value })}
+                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all"
+                          placeholder="Oslo"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Betaling
+                      </label>
+                      <div className="space-y-2">
+                        <label className="flex items-center">
+                          <input
+                            type="radio"
+                            name="payment_method"
+                            value="Faktura"
+                            checked={formData.payment_method === 'Faktura'}
+                            onChange={(e) => setFormData({ ...formData, payment_method: e.target.value })}
+                            className="mr-2"
+                          />
+                          <span className="text-sm text-gray-700">Faktura</span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Note Section and Delivery Time */}
+                <div className="bg-blue-50 rounded-lg p-6 border-2 border-blue-200">
+                  <h3 className="text-xl font-bold text-blue-800 mb-4 flex items-center gap-2">
+                    <span>📝</span>
+                    Bestillingsinformasjon
+                  </h3>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <label htmlFor="note" className="block text-sm font-semibold text-blue-700 mb-2">
+                        Note / Extra Information
+                      </label>
+                      <textarea
+                        id="note"
+                        value={formData.note}
+                        onChange={(e) => setFormData({ ...formData, note: e.target.value })}
+                        rows={4}
+                        className="w-full px-4 py-3 border-2 border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
+                        placeholder="Add any additional information or special instructions..."
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="delivery_time" className="block text-sm font-semibold text-blue-700 mb-2">
+                        Preferred Delivery Time
+                      </label>
+                      <select
+                        id="delivery_time"
+                        value={formData.delivery_time}
+                        onChange={(e) => setFormData({ ...formData, delivery_time: e.target.value })}
+                        className="w-full px-4 py-3 border-2 border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      >
+                        <option value="">Select delivery time</option>
+                        <option value="Morning (9:00 - 12:00)">Morning (9:00 - 12:00)</option>
+                        <option value="Afternoon (12:00 - 17:00)">Afternoon (12:00 - 17:00)</option>
+                        <option value="Evening (17:00 - 20:00)">Evening (17:00 - 20:00)</option>
+                        <option value="Anytime">Anytime</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Legacy fields for backward compatibility */}
+                <div className="hidden">
+                  <input
+                    type="text"
+                    value={formData.shipping_address || `${formData.delivery_address}, ${formData.delivery_postal_code} ${formData.delivery_postal_place}`}
+                    readOnly
+                  />
+                </div>
                 {/* Saved Addresses Dropdown */}
                 {savedAddresses.length > 0 && (
                   <div>

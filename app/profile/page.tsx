@@ -630,7 +630,7 @@ export default function ProfilePage() {
                           </div>
                           <div className="text-right">
                             <p className="text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">{t.orders.total}</p>
-                            <p className="text-base font-semibold text-gray-900">${order.total.toFixed(2)}</p>
+                            <p className="text-base font-semibold text-gray-900">kr {order.total.toFixed(2)}</p>
                           </div>
                           <span className={`px-2.5 py-1 rounded text-xs font-medium ${
                             order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :

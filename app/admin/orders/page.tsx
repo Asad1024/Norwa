@@ -232,7 +232,7 @@ export default function AdminOrdersPage() {
         <div className="text-sm text-gray-600">{new Date(order.created_at).toLocaleDateString()}</div>
       </td>
       <td className="py-3 px-4">
-        <div className="text-sm font-medium text-gray-900">${order.total.toFixed(2)}</div>
+        <div className="text-sm font-medium text-gray-900">kr {order.total.toFixed(2)}</div>
       </td>
       <td className="py-3 px-4">
         <select

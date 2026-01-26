@@ -225,6 +225,11 @@ export default function Home() {
                   })()}
                 </div>
                 <div className="p-5">
+                  {product.product_number && (
+                    <p className="text-xs text-gray-500 mb-1 font-mono">
+                      #{product.product_number}
+                    </p>
+                  )}
                   <h3 className="font-semibold text-base text-gray-900 mb-2 line-clamp-2">
                     {getTranslation(product.name_translations, language)}
                   </h3>
@@ -244,7 +249,7 @@ export default function Home() {
                   </div>
                   <div className="flex items-center justify-between">
                     <p className="text-lg font-semibold text-gray-900">
-                      ${product.price.toFixed(2)}
+                      kr {product.price.toFixed(2)}
                     </p>
                     <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-nature-green-600 transition-colors" />
                   </div>
